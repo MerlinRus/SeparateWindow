@@ -21,6 +21,8 @@ button{font:22px sans-serif;padding:12px}iframe{width:200px;height:100px}
 const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d');
 setInterval(()=>{ctx.fillStyle='orange';ctx.fillRect(0,0,300,150)},50);
 document.querySelector('video').srcObject=canvas.captureStream(10);
+window.playerEvents=0;
+document.querySelector('video').addEventListener('pointerdown',event=>{window.playerEvents++;event.currentTarget.pause()});
 </script>'''
 
 
@@ -29,7 +31,18 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-Type', 'text/html; charset=utf-8')
         self.end_headers()
-        self.wfile.write(FIXTURE)
+        if self.path == '/embedded':
+            self.wfile.write(f'''<!doctype html><style>iframe{{width:500px;height:300px}}</style>
+              <iframe id="movie" src="http://localhost:{self.server.server_port}/frame"></iframe>'''.encode())
+        elif self.path == '/frame':
+            self.wfile.write(b'''<!doctype html><style>html,body{margin:0;height:100%}button{width:100%;height:100%}</style>
+              <button id="play">Play / pause</button><script>
+                window.hits=0;window.identity=crypto.randomUUID();
+                document.querySelector('button').addEventListener('pointerdown',()=>window.hits++);
+                document.querySelector('button').addEventListener('click',()=>window.hits++);
+              </script>''')
+        else:
+            self.wfile.write(FIXTURE)
 
     def log_message(self, *args):
         pass
@@ -52,6 +65,35 @@ def main():
             errors = []
             worker.on('console', lambda msg: errors.append(msg.text) if msg.type == 'error' else None)
             page = context.pages[0]
+            page.goto(url + 'embedded')
+            frame = page.frame_locator('#movie')
+            frame.get_by_role('button').wait_for()
+            frame_id = page.frames[1].evaluate('window.identity')
+            frame.get_by_role('button').focus()
+            worker.evaluate('''async url => {
+              const [tab]=await chrome.tabs.query({url});await tell(tab.id,'select');
+            }''', url + 'embedded')
+            page.keyboard.press('Escape')
+            assert page.locator('html > div').count() == 0, 'Escape must cancel even if focus was inside an iframe'
+            worker.evaluate('''async url => {
+              const [tab]=await chrome.tabs.query({url});await tell(tab.id,'select');
+            }''', url + 'embedded')
+            bounds = page.locator('#movie').bounding_box()
+            page.mouse.move(bounds['x'] + 200, bounds['y'] + 120)
+            page.mouse.click(bounds['x'] + 200, bounds['y'] + 120)
+            page.wait_for_timeout(300)
+            hits = page.frames[1].evaluate('window.hits')
+            assert hits == 0, f'Selection must not trigger iframe player play/pause; got {hits} events'
+            page.wait_for_function("document.querySelector('#movie').getAttributeNames().some(x=>x.endsWith('-target'))", timeout=3000)
+            assert page.frames[1].evaluate('window.identity') == frame_id
+            page.screenshot(path=str(ROOT / 'tests' / 'iframe-selected.png'))
+            worker.evaluate('''async url => {
+              const [tab]=await chrome.tabs.query({url});await restore(tab.id);
+            }''', url + 'embedded')
+            frame.get_by_role('button').click()
+            assert page.frames[1].evaluate('window.hits') == 2, 'Player controls must work normally after selection ends'
+            worker.evaluate('''async url=>chrome.storage.local.remove(`selection:${url}`)''', url + 'embedded')
+            print('PASS: cross-origin iframe selection intercepts pointerdown/click without reloading the player')
             page.goto(url)
             print('Fixture loaded; testing picker...', flush=True)
             page.wait_for_function('window.__separateWindowLocal === undefined')  # isolated world stays isolated
@@ -74,6 +116,20 @@ def main():
                   const local = await chrome.storage.local.get(null);
                   return {windows,session,local};
                 }''')
+
+            command('select')
+            box = page.locator('video').bounding_box()
+            page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+            page.mouse.click(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
+            page.wait_for_timeout(250)
+            assert page.evaluate('window.playerEvents') == 0, 'Selection must intercept direct video pointerdown handlers'
+            assert page.locator('video').evaluate('(v)=>!v.paused'), 'Selection must preserve playing state'
+            command('restore')
+            command('forget')
+            page.locator('video').click()
+            assert page.evaluate('window.playerEvents') == 1, 'Video pointer events must work again after returning'
+            page.locator('video').evaluate('(v)=>v.play()')
+            print('PASS: direct video selection preserves playback and restores pointer events')
 
             command('select')
             page.keyboard.press('Escape')
@@ -222,7 +278,8 @@ def main():
             print('ALL SMOKE CHECKS PASSED')
         except Exception:
             page.screenshot(path=str(ROOT / 'tests' / 'failure.png'))
-            print('Failure state:', json.dumps(state(), ensure_ascii=True), flush=True)
+            if 'state' in locals():
+                print('Failure state:', json.dumps(state(), ensure_ascii=True), flush=True)
             raise
         finally:
             context.close()

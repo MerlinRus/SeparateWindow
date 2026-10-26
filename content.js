@@ -30,6 +30,7 @@
       .bar button{background:#152031}.bar button:hover{background:#344963}.bar span{font:12px system-ui;color:#fff;white-space:nowrap;text-shadow:0 1px 3px #000}
       @media(prefers-reduced-motion:reduce){.bar{transition:none}}
       .outline{position:fixed;border:3px solid #5089ff;background:#5089ff18;pointer-events:none}
+      .shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none;outline:none}
       .hint,.notice{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:12px 18px;border-radius:8px;background:#101a2b;color:#fff;font:14px/1.5 system-ui;text-align:center;box-shadow:0 3px 15px #0005;pointer-events:auto}
       .hint button{margin-left:12px}.marker{position:fixed;pointer-events:auto;background:#2357d9;box-shadow:0 2px 8px #0005}
       input[type=range]{width:75px}dialog{pointer-events:auto;max-width:90vw;width:560px;border:1px solid #526077;border-radius:12px;background:#101a2b;color:#fff;padding:20px;font:14px system-ui}dialog::backdrop{background:#0008}dialog input{width:100%;padding:10px;margin:12px 0;color:#fff;background:#263349;border:1px solid #526077}
@@ -65,20 +66,27 @@
 
   function stopPicker() {
     if (!picker) return;
-    picker.controller.abort(); picker.host.remove(); picker = null;
+    const {controller, host, previousFocus} = picker;
+    controller.abort(); host.remove(); picker = null;
+    if (previousFocus?.isConnected) previousFocus.focus({preventScroll: true});
   }
 
   function startPicker() {
     if (selected) return;
     stopPicker(); removeMarker();
+    const previousFocus = document.activeElement;
     const {host, root} = makeUI();
+    // A parent document cannot receive pointer events from a cross-origin iframe.
+    // Catch the entire gesture above the page, then hit-test underneath this host.
+    const shield = document.createElement('div'); shield.className = 'shield'; shield.tabIndex = -1;
     const outline = document.createElement('div'); outline.className = 'outline';
     const hint = document.createElement('div'); hint.className = 'hint';
     hint.textContent = 'Наведите на блок → колесо меняет область → щелчок выносит в окно. Esc — отмена.';
     const cancel = document.createElement('button'); cancel.textContent = 'Отмена';
-    cancel.onclick = stopPicker; hint.append(cancel); root.append(outline, hint);
+    cancel.onclick = stopPicker; hint.append(cancel); root.append(shield, outline, hint);
     const controller = new AbortController();
-    picker = {host, controller, chain: [], index: 0};
+    picker = {host, controller, previousFocus, chain: [], index: 0};
+    shield.focus({preventScroll: true});
     const options = {capture: true, signal: controller.signal};
     function draw() {
       if (!picker?.chain.length) return;
@@ -86,9 +94,9 @@
       outline.style.cssText = `left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px`;
     }
     function hover(event) {
-      if (event.composedPath().includes(host)) return;
+      if (event.composedPath().includes(hint)) return;
       // elementFromPoint selects an iframe as a whole, preserving its live document.
-      let element = document.elementFromPoint(event.clientX, event.clientY);
+      let element = document.elementsFromPoint(event.clientX, event.clientY).find(element => element !== host);
       if (!element || element === document.documentElement) return;
       if (element === picker.chain[0]) return;
       picker.chain = [];
@@ -96,15 +104,21 @@
       picker.index = 0; draw();
     }
     document.addEventListener('pointermove', hover, options);
+    for (const type of ['pointerdown', 'pointerup', 'mousedown', 'mouseup', 'touchstart', 'touchend', 'dblclick', 'contextmenu']) {
+      document.addEventListener(type, event => {
+        if (event.composedPath().includes(hint)) return;
+        event.preventDefault(); event.stopImmediatePropagation();
+      }, {...options, passive: false});
+    }
     document.addEventListener('wheel', event => {
       if (!picker.chain.length) hover(event);
-      if (!picker.chain.length || event.composedPath().includes(host)) return;
+      if (!picker.chain.length || event.composedPath().includes(hint)) return;
       event.preventDefault(); event.stopImmediatePropagation();
       picker.index = Math.max(0, Math.min(picker.chain.length - 1, picker.index + (event.deltaY > 0 ? 1 : -1)));
       draw();
     }, {...options, passive: false});
     document.addEventListener('click', event => {
-      if (event.composedPath().includes(host)) return;
+      if (event.composedPath().includes(hint)) return;
       if (!picker.chain.length) hover(event);
       event.preventDefault(); event.stopImmediatePropagation();
       const element = picker.chain[picker.index];
@@ -114,6 +128,8 @@
     document.addEventListener('keydown', event => {
       if (event.key === 'Escape') {event.preventDefault(); event.stopImmediatePropagation(); stopPicker();}
     }, options);
+    // Wait until Chromium has painted the shield and updated iframe hit testing.
+    return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   }
 
   function renderCrop() {
@@ -248,7 +264,9 @@
   chrome.runtime.onMessage.addListener((message, sender, respond) => {
     if (sender.id !== chrome.runtime.id) return;
     switch (message.type) {
-      case 'select': startPicker(); break;
+      case 'select':
+        Promise.resolve(startPicker()).then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
+        return true;
       case 'uncrop': unCrop(); break;
       case 'forget':
         chrome.storage.local.remove(`selection:${location.href}`).catch(error => notify(error.message));
