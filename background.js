@@ -33,7 +33,7 @@ async function restore(tabId) {
   const key = sessionKey(tabId);
   const state = (await chrome.storage.session.get(key))[key];
   await tell(tabId, 'uncrop').catch(() => {});
-  if (!state) return;
+  if (!state) {await tell(tabId, 'returned').catch(() => {}); return;}
   const origin = await findOrigin(state);
   if (origin) {
     await chrome.tabs.move(tabId, {windowId: origin.id, index: state.index});
@@ -44,6 +44,7 @@ async function restore(tabId) {
   }
   await removePlaceholder(state);
   await chrome.storage.session.remove(key);
+  await tell(tabId, 'returned').catch(() => {});
 }
 
 async function detach(tab, message) {
@@ -52,7 +53,7 @@ async function detach(tab, message) {
   if (typeof message.selector !== 'string' || message.selector.length > 12000) throw new Error(t('invalidArea'));
   const pageUrl = tab.url.split('#__sw_local=')[0];
   const saved = (await chrome.storage.local.get(selectionKey(pageUrl)))[selectionKey(pageUrl)];
-  const state = {originWindowId: tab.windowId, index: tab.index, url: pageUrl, incognito: tab.incognito, pinned: tab.pinned};
+  const state = {originWindowId: tab.windowId, index: tab.index, url: pageUrl, selector: message.selector, incognito: tab.incognito, pinned: tab.pinned};
   const tabs = await chrome.tabs.query({windowId: tab.windowId});
   if (tabs.length === 1) state.placeholderId = (await chrome.tabs.create({windowId: tab.windowId, url: 'about:blank', active: false})).id;
   const bounds = saved?.bounds;
@@ -81,6 +82,7 @@ async function handle(message, sender) {
   const key = sessionKey(tabId);
   const state = (await chrome.storage.session.get(key))[key];
   switch (message.type) {
+    case 'window-state': return {detached: !!state && state.popupWindowId === tab.windowId, selector: state?.selector};
     case 'select':
       if (state) return restore(tabId);
       return tell(tabId, 'select');

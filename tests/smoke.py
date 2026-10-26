@@ -284,11 +284,23 @@ def main():
             assert page.url == url, page.url
             assert any(w['type'] == 'popup' for w in state()['windows'])
             assert page.locator('header').is_hidden()
+            page.reload()
+            page.wait_for_timeout(350)
+            tree = cdp.send('DOM.getDocument', {'depth': -1, 'pierce': True})
+            def markers(node):
+                attrs = node.get('attributes', [])
+                pairs = dict(zip(attrs[::2], attrs[1::2]))
+                count = int('marker' in pairs.get('class','').split())
+                return count + sum(markers(child) for child in node.get('children',[]) + node.get('shadowRoots',[]))
+            assert markers(tree['root']) == 0, 'Reloading a detached page must not create a reopen button inside the popup'
+            assert page.locator('header').is_hidden(), 'Reloading a popup must restore the isolated element'
+            print('PASS: popup reload keeps the element isolated without a reopen marker')
             command('restore')
             page.reload()
             page.wait_for_timeout(300)
             # Revisit marker visible, without automatic detachment for ordinary URLs.
             assert not state()['session']
+            assert markers(cdp.send('DOM.getDocument', {'depth':-1,'pierce':True})['root']) == 1
             command('forget')
             page.wait_for_timeout(150)
             assert f'selection:{url}' not in state()['local']
@@ -315,6 +327,9 @@ def main():
             page.wait_for_timeout(500)
             page.goto(url + '?episode=next')
             page.wait_for_timeout(200)
+            assert page.locator('header').is_hidden(), 'Popup navigation must preserve element isolation'
+            navigation_cdp = context.new_cdp_session(page)
+            assert markers(navigation_cdp.send('DOM.getDocument', {'depth':-1,'pierce':True})['root']) == 0
             popup = next(w for w in state()['windows'] if w['type'] == 'popup')
             with context.expect_page(timeout=5000) as recovered:
                 worker.evaluate('windowId=>chrome.windows.remove(windowId)', popup['id'])

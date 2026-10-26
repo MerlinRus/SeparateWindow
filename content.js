@@ -7,7 +7,7 @@
   const ancestorAttr = `data-${token}-ancestor`;
   let selected, selector, sourceUrl, initialSize, cropStyle, ui, shadow, picker;
   let ancestors = [], scale = 1, rotation = 0, brightness = 1, fit = true;
-  let marker, markerTarget, savedSelector, noticeTimer;
+  let marker, markerTarget, savedSelector, noticeTimer, detached = false;
 
   async function send(type, extra = {}) {
     const result = await chrome.runtime.sendMessage({type, ...extra});
@@ -151,14 +151,14 @@
     `;
   }
 
-  function unCrop() {
+  function unCrop(showMarker = true) {
     stopPicker();
     cropStyle?.remove(); cropStyle = null;
     selected?.removeAttribute(targetAttr);
     for (const ancestor of ancestors) ancestor.removeAttribute(ancestorAttr);
-    ancestors = []; selected = null;
+    ancestors = []; selected = null; detached = false;
     ui?.remove(); ui = null; shadow = null;
-    installMarker(savedSelector);
+    if (showMarker) installMarker(savedSelector);
   }
 
   function windowLink() {
@@ -237,7 +237,7 @@
     for (let ancestor = selected.parentElement; ancestor; ancestor = ancestor.parentElement) {ancestor.setAttribute(ancestorAttr, ''); ancestors.push(ancestor);}
     cropStyle = document.createElement('style'); document.documentElement.append(cropStyle);
     toolbar(); renderCrop();
-    try {await send('detach', {selector, width: rect.width, height: rect.height});}
+    try {await send('detach', {selector, width: rect.width, height: rect.height}); detached = true;}
     catch (error) {unCrop(); throw error;}
   }
 
@@ -252,7 +252,7 @@
   }
   function installMarker(value) {
     removeMarker();
-    if (!value || selected || picker) return false;
+    if (!value || selected || picker || detached) return false;
     let element;
     try {element = document.querySelector(value);} catch {return false;}
     if (!element) return false;
@@ -270,7 +270,8 @@
       case 'select':
         Promise.resolve(startPicker()).then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
         return true;
-      case 'uncrop': unCrop(); break;
+      case 'uncrop': unCrop(false); break;
+      case 'returned': detached = false; installMarker(savedSelector); break;
       case 'forget':
         chrome.storage.local.remove(`selection:${location.href}`).catch(error => notify(error.message));
         savedSelector = null; removeMarker(); break;
@@ -280,6 +281,8 @@
   });
 
   async function init() {
+    const context = await send('window-state');
+    detached = context.detached;
     let automatic = false;
     if (location.hash.startsWith('#__sw_local=')) {
       try {
@@ -292,6 +295,7 @@
       const key = `selection:${location.href}`;
       savedSelector = (await chrome.storage.local.get(key))[key]?.selector;
     }
+    if (detached) {savedSelector ||= context.selector; automatic = true;}
     if (!savedSelector) return;
     function attempt() {
       let element;
