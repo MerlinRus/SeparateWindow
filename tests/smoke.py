@@ -32,8 +32,15 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'text/html; charset=utf-8')
         self.end_headers()
         if self.path == '/embedded':
-            self.wfile.write(f'''<!doctype html><style>iframe{{width:500px;height:300px}}</style>
-              <iframe id="movie" src="http://localhost:{self.server.server_port}/frame"></iframe>'''.encode())
+            self.wfile.write(f'''<!doctype html><style>
+              body{{padding:70px 12px 50px;background:#334455}}
+              body::after{{content:"";position:fixed;inset:0;background:linear-gradient(#aa000033,#0000);pointer-events:none}}
+              .shell{{position:relative;background:linear-gradient(#803030,#305080);border:8px solid #e0a020;border-radius:24px;padding:22px;box-shadow:0 0 20px #f00}}
+              .player-main{{position:relative;padding-bottom:60%;height:0;background:#161616;box-shadow:0 2px 8px #0009;backdrop-filter:blur(1px)}}
+              iframe{{position:absolute;inset:0;width:500px;height:300px}}
+              </style><main class="shell"><div class="player-main">
+              <iframe id="movie" src="http://localhost:{self.server.server_port}/frame"></iframe>
+              </div></main>'''.encode())
         elif self.path == '/frame':
             self.wfile.write(b'''<!doctype html><style>html,body{margin:0;height:100%}button{width:100%;height:100%}</style>
               <button id="play">Play / pause</button><script>
@@ -86,12 +93,21 @@ def main():
             assert hits == 0, f'Selection must not trigger iframe player play/pause; got {hits} events'
             page.wait_for_function("document.querySelector('#movie').getAttributeNames().some(x=>x.endsWith('-target'))", timeout=3000)
             assert page.frames[1].evaluate('window.identity') == frame_id
+            rect = page.locator('#movie').bounding_box()
+            viewport = page.evaluate('({width:innerWidth,height:innerHeight})')
+            assert abs(rect['x'] + rect['width'] / 2 - viewport['width'] / 2) < 1, 'Player must be centered on the window, not an ancestor'
+            assert abs(rect['y'] + rect['height'] / 2 - viewport['height'] / 2) < 1, 'Player must not be shifted by ancestor layout'
+            assert page.locator('.shell').evaluate('(e)=>e.getBoundingClientRect().height') == 0, 'Original site shell must not paint behind the player'
+            assert page.locator('body').evaluate("(e)=>getComputedStyle(e,'::after').display") == 'none', 'Page decorations must disappear'
+            assert page.locator('html').evaluate('(e)=>getComputedStyle(e).backgroundColor') == 'rgb(0, 0, 0)', 'Outside the selected player only a black background is allowed'
             page.screenshot(path=str(ROOT / 'tests' / 'iframe-selected.png'))
             worker.evaluate('''async url => {
               const [tab]=await chrome.tabs.query({url});await restore(tab.id);
             }''', url + 'embedded')
             frame.get_by_role('button').click()
             assert page.frames[1].evaluate('window.hits') == 2, 'Player controls must work normally after selection ends'
+            assert page.locator('.shell').evaluate('(e)=>getComputedStyle(e).display') == 'block'
+            assert page.locator('body').evaluate("(e)=>getComputedStyle(e,'::after').content") == '\"\"', 'Page decorations must return with the tab'
             worker.evaluate('''async url=>chrome.storage.local.remove(`selection:${url}`)''', url + 'embedded')
             print('PASS: cross-origin iframe selection intercepts pointerdown/click without reloading the player')
             page.goto(url)

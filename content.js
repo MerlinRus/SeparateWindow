@@ -140,10 +140,12 @@
     const factor = fit ? Math.min(availableW / (rotated ? h : w), availableH / (rotated ? w : h)) * scale : scale;
     const target = `[${targetAttr}]`, ancestor = `[${ancestorAttr}]`, host = `[data-${token}-ui]`;
     cropStyle.textContent = `
-      html,body{overflow:hidden!important;background:#10141c!important;min-width:0!important;min-height:0!important}
-      ${ancestor}{transform:none!important;filter:none!important;perspective:none!important;contain:none!important;content-visibility:visible!important;clip:auto!important;clip-path:none!important;overflow:visible!important;opacity:1!important;isolation:auto!important;will-change:auto!important}
+      html,body{overflow:hidden!important;min-width:0!important;min-height:0!important}
+      ${ancestor}{display:contents!important;position:static!important;margin:0!important;padding:0!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;transform:none!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:none!important;backdrop-filter:none!important;perspective:none!important;contain:none!important;container-type:normal!important;content-visibility:visible!important;clip:auto!important;clip-path:none!important;overflow:visible!important;opacity:1!important;isolation:auto!important;mix-blend-mode:normal!important;will-change:auto!important}
+      ${ancestor}::before,${ancestor}::after{content:none!important;display:none!important}
+      html${ancestor}{display:block!important;background:#000!important}
       ${ancestor} > :not(${ancestor}):not(${target}):not(${host}):not(style):not(script):not(link){display:none!important}
-      ${target}{display:${initialSize.display}!important;position:fixed!important;inset:auto!important;left:50%!important;top:50%!important;width:${w}px!important;height:${h}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;z-index:2147483640!important;transform:translate(-50%,-50%) rotate(${rotation}deg) scale(${factor})!important;transform-origin:center!important;filter:brightness(${brightness})!important;box-sizing:border-box!important;visibility:visible!important;}
+      ${target}{display:${initialSize.display}!important;position:fixed!important;inset:auto!important;left:50%!important;top:50%!important;width:${w}px!important;height:${h}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;z-index:2147483640!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;transform:translate(-50%,-50%) rotate(${rotation}deg) scale(${factor})!important;transform-origin:center!important;filter:brightness(${brightness})!important;box-sizing:border-box!important;visibility:visible!important;}
       ${host}{display:block!important}
     `;
   }
