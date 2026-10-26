@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ru">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Separate Window</title>
+<link rel="stylesheet" href="popup.css">
+<body>
+  <header><span class="logo">↗</span><div><strong>Separate Window</strong><small>Любой блок — в отдельное окно</small></div></header>
+  <button id="select" class="primary">Выбрать блок на странице</button>
+  <p>Наведите на видео, виджет или другой блок. Колесо мыши меняет область. Нажмите для выбора, Esc — отмена.</p>
+  <button id="restore">Вернуть страницу во вкладку</button>
+  <button id="forget">Забыть выбор для этой страницы</button>
+  <footer>Быстрый вызов: <kbd>Alt + Shift + S</kbd></footer>
+  <div id="status" role="status"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

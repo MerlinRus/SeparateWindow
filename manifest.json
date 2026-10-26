@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "Separate Window — Local",
+  "version": "1.0.0",
+  "description": "Вынос выбранного блока страницы в отдельное окно без перезагрузки.",
+  "minimum_chrome_version": "120",
+  "permissions": ["activeTab", "tabs", "scripting", "storage", "contextMenus", "bookmarks"],
+  "host_permissions": ["<all_urls>"],
+  "background": {"service_worker": "background.js"},
+  "action": {"default_popup": "popup.html", "default_title": "Separate Window"},
+  "commands": {"select": {"suggested_key": {"default": "Alt+Shift+S"}, "description": "Выбрать блок / вернуть во вкладку"}},
+  "content_scripts": [{"matches": ["http://*/*", "https://*/*", "file:///*"], "js": ["content.js"], "run_at": "document_idle"}]
+}
