@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Separate Window — Local",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Вынос выбранного блока страницы в отдельное окно без перезагрузки.",
   "minimum_chrome_version": "120",
   "permissions": ["activeTab", "tabs", "scripting", "storage", "contextMenus", "bookmarks"],

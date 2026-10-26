@@ -1,5 +1,6 @@
 """Real Chromium + unpacked MV3 smoke test. Requires Python playwright."""
 import json
+import struct
 from pathlib import Path
 import tempfile
 import threading
@@ -106,7 +107,7 @@ def main():
             cdp = context.new_cdp_session(page)
             cdp.send('DOM.enable')
 
-            def click_control(label):
+            def control(label, function='function(){this.click()}'):
                 tree = cdp.send('DOM.getDocument', {'depth': -1, 'pierce': True})
                 def find(node):
                     attrs = node.get('attributes', [])
@@ -120,13 +121,53 @@ def main():
                 node = find(tree['root'])
                 assert node, label
                 obj = cdp.send('DOM.resolveNode', {'nodeId': node['nodeId']})['object']['objectId']
-                cdp.send('Runtime.callFunctionOn', {'objectId': obj, 'functionDeclaration': 'function(){this.click()} '})
+                result = cdp.send('Runtime.callFunctionOn', {'objectId': obj, 'functionDeclaration': function, 'returnByValue': True})
+                return result['result'].get('value')
+
+            def click_control(label):
+                rect = control(label, '''function(){
+                  const r=this.getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2};
+                }''')
+                page.mouse.move(rect['x'], rect['y'])
+                page.mouse.click(rect['x'], rect['y'])
+
+            panel = 'Управление отдельным окном'
+            metrics = '''function(){
+              const rect=this.getBoundingClientRect(), style=getComputedStyle(this);
+              return {opacity:Number(style.opacity),x:rect.x,y:rect.y,width:rect.width,height:rect.height};
+            }'''
+            page.mouse.move(5, 345)
+            page.wait_for_timeout(200)
+            assert control(panel, metrics)['opacity'] == 0, 'Controls must disappear away from their hover area'
+            rect = page.locator('#widget').bounding_box()
+            assert abs(rect['y'] + rect['height'] / 2 - 175) < 1, 'Controls must not reserve space above the block'
+            page.screenshot(path=str(ROOT / 'tests' / 'window-preview.png'))
+            area = control(panel, metrics)
+            page.mouse.move(area['x'] + area['width'] - 8, area['y'] + 8)
+            page.wait_for_timeout(200)
+            assert 0 < control(panel, metrics)['opacity'] < 1, 'Hovered controls must be translucent'
+            page.screenshot(path=str(ROOT / 'tests' / 'controls-preview.png'))
+            area = control(panel, metrics)
+            assert area['x'] >= 0 and area['x'] + area['width'] <= 500
+            page.mouse.move(5, 345)
+            page.wait_for_timeout(200)
+            assert control(panel, metrics)['opacity'] == 0
+            control('Увеличить', 'function(){this.focus()}')
+            page.wait_for_timeout(200)
+            assert control(panel, metrics)['opacity'] > 0, 'Keyboard focus must reveal controls'
+            page.keyboard.press('Escape')
+            page.wait_for_timeout(200)
+            assert control(panel, metrics)['opacity'] == 0
+            print('PASS: hidden overlay, hover transparency, no reserved space, keyboard focus and Escape')
 
             click_control('Сохранить или забыть размер и положение окна')
             page.wait_for_timeout(200)
             assert state()['local'][f'selection:{url}']['bounds']['width'] > 0
             click_control('Сохранить или забыть размер и положение окна')
             page.wait_for_timeout(150)
+            page.mouse.move(5, 345)
+            page.wait_for_timeout(200)
+            assert control(panel, metrics)['opacity'] == 0, 'Clicked controls must also hide when the pointer leaves'
             assert 'bounds' not in state()['local'][f'selection:{url}']
             click_control('Сохранить или забыть размер и положение окна')
             page.wait_for_timeout(150)
@@ -141,6 +182,7 @@ def main():
                 click_control('Сохранить видимую область блока в PNG')
             path = Path(download.value.path())
             assert path.read_bytes().startswith(b'\x89PNG\r\n\x1a\n')
+            assert struct.unpack('>II', path.read_bytes()[16:24]) == (500, 300), 'Snapshot must include the full block without a toolbar crop'
             print(f'PASS: screenshot download ({path.stat().st_size} bytes)')
 
             click_control('Сохранить в закладки Separate windows')

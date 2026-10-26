@@ -48,7 +48,7 @@ async function detach(tab, message) {
   const bounds = saved?.bounds;
   const options = {tabId: tab.id, type: 'popup', focused: true,
     width: Math.max(320, Math.min(2400, Math.round(message.width || 800))),
-    height: Math.max(240, Math.min(1600, Math.round((message.height || 500) + 90)))};
+    height: Math.max(240, Math.min(1600, Math.round((message.height || 500) + 40)))};
   if (bounds) Object.assign(options, bounds);
   try {
     const popup = await chrome.windows.create(options);

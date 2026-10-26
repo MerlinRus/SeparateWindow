@@ -24,8 +24,11 @@
       :host{color-scheme:dark}*{box-sizing:border-box}button,input{font:13px system-ui,sans-serif}
       button{border:1px solid #526077;background:#263349;color:#fff;border-radius:5px;padding:6px 9px;cursor:pointer;white-space:nowrap}
       button:hover{background:#3c5273}button:focus-visible,input:focus-visible{outline:2px solid #9fc5ff;outline-offset:2px}
-      .bar{pointer-events:auto;position:fixed;top:0;left:0;right:0;min-height:46px;padding:6px;display:flex;flex-wrap:wrap;align-items:center;gap:5px;background:#101a2b;box-shadow:0 1px 8px #0008}
-      .bar button:first-child{background:#2357d9}.bar span{font:12px system-ui;color:#dbe5f5;white-space:nowrap}
+      .bar{pointer-events:auto;position:fixed;top:0;right:0;width:max-content;max-width:100%;padding:6px;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:5px;opacity:0;transition:opacity 120ms ease-out}
+      .bar:hover,.bar:focus-within{opacity:.75}.bar:focus-within{transition:none}
+      .bar button,.bar input{pointer-events:none}.bar:hover button,.bar:hover input,.bar:focus-within button,.bar:focus-within input{pointer-events:auto}
+      .bar button{background:#152031}.bar button:hover{background:#344963}.bar span{font:12px system-ui;color:#fff;white-space:nowrap;text-shadow:0 1px 3px #000}
+      @media(prefers-reduced-motion:reduce){.bar{transition:none}}
       .outline{position:fixed;border:3px solid #5089ff;background:#5089ff18;pointer-events:none}
       .hint,.notice{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:12px 18px;border-radius:8px;background:#101a2b;color:#fff;font:14px/1.5 system-ui;text-align:center;box-shadow:0 3px 15px #0005;pointer-events:auto}
       .hint button{margin-left:12px}.marker{position:fixed;pointer-events:auto;background:#2357d9;box-shadow:0 2px 8px #0005}
@@ -116,8 +119,7 @@
   function renderCrop() {
     if (!selected) return;
     const w = initialSize.width, h = initialSize.height;
-    const toolbarHeight = shadow?.querySelector('.bar')?.getBoundingClientRect().height || 48;
-    const availableW = window.innerWidth, availableH = Math.max(20, window.innerHeight - toolbarHeight);
+    const availableW = window.innerWidth, availableH = window.innerHeight;
     const rotated = rotation % 180 !== 0;
     const factor = fit ? Math.min(availableW / (rotated ? h : w), availableH / (rotated ? w : h)) * scale : scale;
     const target = `[${targetAttr}]`, ancestor = `[${ancestorAttr}]`, host = `[data-${token}-ui]`;
@@ -125,7 +127,7 @@
       html,body{overflow:hidden!important;background:#10141c!important;min-width:0!important;min-height:0!important}
       ${ancestor}{transform:none!important;filter:none!important;perspective:none!important;contain:none!important;content-visibility:visible!important;clip:auto!important;clip-path:none!important;overflow:visible!important;opacity:1!important;isolation:auto!important;will-change:auto!important}
       ${ancestor} > :not(${ancestor}):not(${target}):not(${host}):not(style):not(script):not(link){display:none!important}
-      ${target}{display:${initialSize.display}!important;position:fixed!important;inset:auto!important;left:50%!important;top:calc(50% + ${toolbarHeight / 2}px)!important;width:${w}px!important;height:${h}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;z-index:2147483640!important;transform:translate(-50%,-50%) rotate(${rotation}deg) scale(${factor})!important;transform-origin:center!important;filter:brightness(${brightness})!important;box-sizing:border-box!important;visibility:visible!important;}
+      ${target}{display:${initialSize.display}!important;position:fixed!important;inset:auto!important;left:50%!important;top:50%!important;width:${w}px!important;height:${h}px!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;z-index:2147483640!important;transform:translate(-50%,-50%) rotate(${rotation}deg) scale(${factor})!important;transform-origin:center!important;filter:brightness(${brightness})!important;box-sizing:border-box!important;visibility:visible!important;}
       ${host}{display:block!important}
     `;
   }
@@ -153,8 +155,7 @@
       const {image} = await send('capture');
       const img = new Image(); img.src = image; await img.decode();
       const rect = selected.getBoundingClientRect();
-      const toolbarHeight = shadow.querySelector('.bar').getBoundingClientRect().height;
-      const x = Math.max(0, rect.left), y = Math.max(toolbarHeight, rect.top);
+      const x = Math.max(0, rect.left), y = Math.max(0, rect.top);
       const w = Math.min(innerWidth, rect.right) - x, h = Math.min(innerHeight, rect.bottom) - y;
       if (w <= 0 || h <= 0) throw new Error('Выбранный блок вне видимой области.');
       const ratioX = img.width / innerWidth, ratioY = img.height / innerHeight;
@@ -171,6 +172,10 @@
   function toolbar() {
     ({host: ui, root: shadow} = makeUI());
     const bar = document.createElement('div'); bar.className = 'bar'; bar.setAttribute('aria-label', 'Управление отдельным окном');
+    bar.addEventListener('pointerleave', () => shadow?.activeElement?.blur());
+    bar.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {shadow.activeElement?.blur(); event.stopPropagation();}
+    });
     function button(text, title, action) {
       const button = document.createElement('button'); button.textContent = text; button.title = title;
       button.setAttribute('aria-label', title);
