@@ -12,27 +12,36 @@ async function tell(tabId, type) {
   }
 }
 
+async function findOrigin(state) {
+  try {
+    const origin = await chrome.windows.get(state.originWindowId);
+    if (origin.type === 'normal' && origin.incognito === !!state.incognito) return origin;
+  } catch {}
+  return (await chrome.windows.getAll({windowTypes: ['normal']})).find(win => win.incognito === !!state.incognito);
+}
+
+async function removePlaceholder(state) {
+  if (!state.placeholderId) return;
+  try {
+    const placeholder = await chrome.tabs.get(state.placeholderId);
+    if (placeholder.url === 'about:blank') await chrome.tabs.remove(placeholder.id);
+  } catch {}
+}
+
 async function restore(tabId) {
   const key = sessionKey(tabId);
   const state = (await chrome.storage.session.get(key))[key];
   await tell(tabId, 'uncrop').catch(() => {});
   if (!state) return;
-  let origin;
-  try { origin = await chrome.windows.get(state.originWindowId); } catch {}
-  if (!origin) origin = (await chrome.windows.getAll({windowTypes: ['normal']}))[0];
+  const origin = await findOrigin(state);
   if (origin) {
     await chrome.tabs.move(tabId, {windowId: origin.id, index: state.index});
     await chrome.tabs.update(tabId, {active: true});
     await chrome.windows.update(origin.id, {focused: true});
   } else {
-    await chrome.windows.create({tabId, type: 'normal', focused: true});
+    await chrome.windows.create({tabId, type: 'normal', incognito: !!state.incognito, focused: true});
   }
-  if (state.placeholderId) {
-    try {
-      const placeholder = await chrome.tabs.get(state.placeholderId);
-      if (placeholder.url === 'about:blank') await chrome.tabs.remove(placeholder.id);
-    } catch {}
-  }
+  await removePlaceholder(state);
   await chrome.storage.session.remove(key);
 }
 
@@ -42,7 +51,7 @@ async function detach(tab, message) {
   if (typeof message.selector !== 'string' || message.selector.length > 12000) throw new Error('Некорректная область.');
   const pageUrl = tab.url.split('#__sw_local=')[0];
   const saved = (await chrome.storage.local.get(selectionKey(pageUrl)))[selectionKey(pageUrl)];
-  const state = {originWindowId: tab.windowId, index: tab.index};
+  const state = {originWindowId: tab.windowId, index: tab.index, url: pageUrl, incognito: tab.incognito, pinned: tab.pinned};
   const tabs = await chrome.tabs.query({windowId: tab.windowId});
   if (tabs.length === 1) state.placeholderId = (await chrome.tabs.create({windowId: tab.windowId, url: 'about:blank', active: false})).id;
   const bounds = saved?.bounds;
@@ -126,4 +135,30 @@ chrome.commands.onCommand.addListener(async command => {
   const [tab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
   if (tab) handle({type: 'select', tabId: tab.id}, {url: chrome.runtime.getURL('popup.html')}).catch(console.error);
 });
-chrome.tabs.onRemoved.addListener(tabId => chrome.storage.session.remove(sessionKey(tabId)));
+chrome.tabs.onUpdated.addListener((tabId, change) => {
+  if (!change.url) return;
+  const key = sessionKey(tabId);
+  chrome.storage.session.get(key).then(data => {
+    if (data[key]) return chrome.storage.session.set({[key]: {...data[key], url: change.url.split('#__sw_local=')[0]}});
+  }).catch(console.error);
+});
+
+async function recoverClosedPopup(tabId, info) {
+  const key = sessionKey(tabId);
+  const state = (await chrome.storage.session.get(key))[key];
+  if (!state) return;
+  // Native close has already destroyed the document. Recover the page, never an auto-open link.
+  if (info.isWindowClosing && state.popupWindowId === info.windowId && supported(state.url)) {
+    const origin = await findOrigin(state);
+    if (origin) {
+      await chrome.tabs.create({windowId: origin.id, index: state.index, url: state.url, active: true, pinned: !!state.pinned});
+    } else {
+      await chrome.windows.create({url: state.url, type: 'normal', incognito: !!state.incognito, focused: true});
+    }
+    await removePlaceholder(state);
+  }
+  await chrome.storage.session.remove(key);
+}
+chrome.tabs.onRemoved.addListener((tabId, info) => {
+  recoverClosedPopup(tabId, info).catch(console.error);
+});

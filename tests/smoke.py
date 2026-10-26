@@ -290,10 +290,43 @@ def main():
             assert f'selection:{url}' not in state()['local']
             assert not errors, errors
             print('PASS: automatic link, normal revisit, forget selection, clean worker console')
+            page.goto(link)
+            page.wait_for_timeout(500)
+            popup = next(w for w in state()['windows'] if w['type'] == 'popup')
+            origin = next(iter(state()['session'].values()))['originWindowId']
+            with context.expect_page(timeout=5000) as recovered:
+                worker.evaluate('windowId=>chrome.windows.remove(windowId)', popup['id'])
+            page = recovered.value
+            page.wait_for_load_state()
+            assert page.url == url, 'Closing the popup must recover its page as a regular tab'
+            page.locator('header').wait_for(state='visible')
+            page.wait_for_timeout(200)
+            result = state()
+            assert not result['session'], 'Recovery must clear the detached state'
+            assert all(w['type'] == 'normal' for w in result['windows'])
+            assert any(w['id'] == origin and any(t['url'] == url for t in w['tabs']) for w in result['windows'])
+            assert len(context.pages) == 1, 'Recovery must replace the temporary blank tab'
+            print('PASS: native popup close restores the page to its original normal window')
+            page.goto(link)
+            page.wait_for_timeout(500)
+            page.goto(url + '?episode=next')
+            page.wait_for_timeout(200)
+            popup = next(w for w in state()['windows'] if w['type'] == 'popup')
+            with context.expect_page(timeout=5000) as recovered:
+                worker.evaluate('windowId=>chrome.windows.remove(windowId)', popup['id'])
+            page = recovered.value
+            page.wait_for_load_state()
+            assert page.url == url + '?episode=next', 'Recovery must use the latest page URL'
+            page.wait_for_timeout(200)
+            assert not state()['session']
+            assert len(context.pages) == 1
+            assert not errors, errors
+            print('PASS: native popup close recovers the latest navigated URL without reopening the popup')
             page.screenshot(path=str(ROOT / 'tests' / 'verified-page.png'))
             print('ALL SMOKE CHECKS PASSED')
         except Exception:
-            page.screenshot(path=str(ROOT / 'tests' / 'failure.png'))
+            if not page.is_closed():
+                page.screenshot(path=str(ROOT / 'tests' / 'failure.png'))
             if 'state' in locals():
                 print('Failure state:', json.dumps(state(), ensure_ascii=True), flush=True)
             raise
