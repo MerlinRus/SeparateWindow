@@ -69,6 +69,9 @@ def main():
         try:
             print('Chromium launched; waiting for MV3 worker...', flush=True)
             worker = context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
+            ru = json.loads((ROOT / '_locales/ru/messages.json').read_text(encoding='utf-8'))
+            translated_labels = worker.evaluate('''async ru => Object.fromEntries(
+              Object.entries(ru).map(([key,value])=>[value.message,chrome.i18n.getMessage(key)]))''', ru)
             errors = []
             worker.on('console', lambda msg: errors.append(msg.text) if msg.type == 'error' else None)
             page = context.pages[0]
@@ -180,6 +183,7 @@ def main():
             cdp.send('DOM.enable')
 
             def control(label, function='function(){this.click()}'):
+                label = translated_labels.get(label, label)
                 tree = cdp.send('DOM.getDocument', {'depth': -1, 'pierce': True})
                 def find(node):
                     attrs = node.get('attributes', [])

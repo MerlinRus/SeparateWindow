@@ -1,4 +1,5 @@
 (() => {
+  const t = (key, substitutions) => chrome.i18n.getMessage(key, substitutions);
   if (globalThis.__separateWindowLocal) return;
   globalThis.__separateWindowLocal = true;
   const token = `sw-${crypto.randomUUID().replaceAll('-', '')}`;
@@ -10,7 +11,7 @@
 
   async function send(type, extra = {}) {
     const result = await chrome.runtime.sendMessage({type, ...extra});
-    if (!result?.ok) throw new Error(result?.error || 'Расширение недоступно. Перезагрузите страницу.');
+    if (!result?.ok) throw new Error(result?.error || t('unavailable'));
     return result;
   }
 
@@ -56,7 +57,7 @@
         parts.unshift(`#${CSS.escape(node.id)}`); break;
       }
       let part = node.localName;
-      if (!part) throw new Error('Этот элемент выбрать нельзя.');
+      if (!part) throw new Error(t('cannotSelect'));
       const peers = [...(node.parentElement?.children || [])].filter(item => item.localName === node.localName);
       if (peers.length > 1) part += `:nth-of-type(${peers.indexOf(node) + 1})`;
       parts.unshift(part);
@@ -81,8 +82,8 @@
     const shield = document.createElement('div'); shield.className = 'shield'; shield.tabIndex = -1;
     const outline = document.createElement('div'); outline.className = 'outline';
     const hint = document.createElement('div'); hint.className = 'hint';
-    hint.textContent = 'Наведите на блок → колесо меняет область → щелчок выносит в окно. Esc — отмена.';
-    const cancel = document.createElement('button'); cancel.textContent = 'Отмена';
+    hint.textContent = t('pickerHint');
+    const cancel = document.createElement('button'); cancel.textContent = t('cancel');
     cancel.onclick = stopPicker; hint.append(cancel); root.append(shield, outline, hint);
     const controller = new AbortController();
     picker = {host, controller, previousFocus, chain: [], index: 0};
@@ -175,12 +176,12 @@
       const rect = selected.getBoundingClientRect();
       const x = Math.max(0, rect.left), y = Math.max(0, rect.top);
       const w = Math.min(innerWidth, rect.right) - x, h = Math.min(innerHeight, rect.bottom) - y;
-      if (w <= 0 || h <= 0) throw new Error('Выбранный блок вне видимой области.');
+      if (w <= 0 || h <= 0) throw new Error(t('outsideViewport'));
       const ratioX = img.width / innerWidth, ratioY = img.height / innerHeight;
       const canvas = document.createElement('canvas'); canvas.width = Math.round(w * ratioX); canvas.height = Math.round(h * ratioY);
       canvas.getContext('2d').drawImage(img, x * ratioX, y * ratioY, w * ratioX, h * ratioY, 0, 0, canvas.width, canvas.height);
       const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
-      if (!blob) throw new Error('Не удалось создать PNG.');
+      if (!blob) throw new Error(t('pngFailed'));
       const url = URL.createObjectURL(blob), a = document.createElement('a');
       a.href = url; a.download = `separate-window-${Date.now()}.png`; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 60000);
@@ -189,7 +190,7 @@
 
   function toolbar() {
     ({host: ui, root: shadow} = makeUI());
-    const bar = document.createElement('div'); bar.className = 'bar'; bar.setAttribute('aria-label', 'Управление отдельным окном');
+    const bar = document.createElement('div'); bar.className = 'bar'; bar.setAttribute('aria-label', t('controls'));
     bar.addEventListener('pointerleave', () => shadow?.activeElement?.blur());
     bar.addEventListener('keydown', event => {
       if (event.key === 'Escape') {shadow.activeElement?.blur(); event.stopPropagation();}
@@ -200,35 +201,35 @@
       button.onclick = async () => {try {await action(button); renderCrop();} catch (error) {notify(error.message);}};
       bar.append(button);
     }
-    button('↩ Во вкладку', 'Вернуть страницу во вкладку без перезагрузки', () => send('restore'));
-    button('Размер', 'Сохранить или забыть размер и положение окна', async button => {
-      const result = await send('bounds'); button.textContent = result.saved ? 'Размер ✓' : 'Размер';
-      notify(result.saved ? 'Размер и положение сохранены.' : 'Сохранённый размер удалён.');
+    button(t('returnShort'), t('returnTitle'), () => send('restore'));
+    button(t('size'), t('sizeTitle'), async button => {
+      const result = await send('bounds'); button.textContent = result.saved ? t('sizeSaved') : t('size');
+      notify(result.saved ? t('sizeSavedNotice') : t('sizeForgottenNotice'));
     });
-    button('−', 'Уменьшить', () => {scale = Math.max(.1, scale - .1); renderCrop();});
-    button('+', 'Увеличить', () => {scale = Math.min(5, scale + .1); renderCrop();});
-    button('Вписать', 'Вписать в окно / исходный масштаб', button => {fit = !fit; scale = 1; button.textContent = fit ? 'Вписать' : '1:1'; renderCrop();});
-    button('↻', 'Повернуть на 90°', () => {rotation = (rotation + 90) % 360; renderCrop();});
-    const label = document.createElement('span'); label.textContent = 'Яркость';
-    const range = document.createElement('input'); range.type = 'range'; range.min = '.2'; range.max = '2.5'; range.step = '.1'; range.value = '1'; range.setAttribute('aria-label', 'Яркость');
+    button('−', t('zoomOut'), () => {scale = Math.max(.1, scale - .1); renderCrop();});
+    button('+', t('zoomIn'), () => {scale = Math.min(5, scale + .1); renderCrop();});
+    button(t('fit'), t('fitTitle'), button => {fit = !fit; scale = 1; button.textContent = fit ? t('fit') : '1:1'; renderCrop();});
+    button('↻', t('rotateTitle'), () => {rotation = (rotation + 90) % 360; renderCrop();});
+    const label = document.createElement('span'); label.textContent = t('brightness');
+    const range = document.createElement('input'); range.type = 'range'; range.min = '.2'; range.max = '2.5'; range.step = '.1'; range.value = '1'; range.setAttribute('aria-label', t('brightness'));
     range.oninput = () => {brightness = Number(range.value); renderCrop();}; bar.append(label, range);
-    button('Снимок', 'Сохранить видимую область блока в PNG', screenshot);
-    button('★', 'Сохранить в закладки Separate windows', async () => {await send('bookmark', {url: windowLink()}); notify('Закладка сохранена в Separate windows.');});
-    button('Ссылка', 'Получить ссылку для повторного открытия этого блока', async () => {
+    button(t('snapshot'), t('snapshotTitle'), screenshot);
+    button('★', t('bookmarkTitle'), async () => {await send('bookmark', {url: windowLink()}); notify(t('bookmarkSaved'));});
+    button(t('link'), t('linkTitle'), async () => {
       const dialog = document.createElement('dialog');
-      const text = document.createElement('div'); text.textContent = 'Ссылка открывает выбранный блок, если это расширение установлено. Скопируйте Ctrl+C.';
-      const input = document.createElement('input'); input.readOnly = true; input.value = windowLink(); input.setAttribute('aria-label', 'Ссылка на блок');
-      const close = document.createElement('button'); close.textContent = 'Закрыть'; close.onclick = () => {dialog.close(); dialog.remove();};
+      const text = document.createElement('div'); text.textContent = t('linkHelp');
+      const input = document.createElement('input'); input.readOnly = true; input.value = windowLink(); input.setAttribute('aria-label', t('blockLink'));
+      const close = document.createElement('button'); close.textContent = t('close'); close.onclick = () => {dialog.close(); dialog.remove();};
       dialog.append(text, input, close); shadow.append(dialog); dialog.showModal(); input.focus(); input.select();
     });
-    button('⛶', 'Полный экран', () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
+    button('⛶', t('fullscreen'), () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
     shadow.append(bar);
   }
 
   async function openElement(element) {
     if (selected) return;
     const rect = element.getBoundingClientRect();
-    if (!rect.width || !rect.height) throw new Error('Выбранный блок скрыт. Выберите другой.');
+    if (!rect.width || !rect.height) throw new Error(t('hiddenBlock'));
     selector = cssSelector(element); savedSelector = selector; sourceUrl = location.href;
     initialSize = {width: rect.width, height: rect.height, display: getComputedStyle(element).display};
     selected = element; scale = 1; rotation = 0; brightness = 1; fit = true;
@@ -256,7 +257,7 @@
     try {element = document.querySelector(value);} catch {return false;}
     if (!element) return false;
     const {root} = makeUI();
-    marker = document.createElement('button'); marker.className = 'marker'; marker.textContent = '↗ В отдельное окно';
+    marker = document.createElement('button'); marker.className = 'marker'; marker.textContent = t('marker');
     markerTarget = element; marker.onclick = () => openElement(element).catch(error => notify(error.message));
     root.append(marker); positionMarker(); return true;
   }
@@ -283,10 +284,10 @@
     if (location.hash.startsWith('#__sw_local=')) {
       try {
         const data = JSON.parse(decodeURIComponent(location.hash.slice(12)));
-        if (typeof data.selector !== 'string' || data.selector.length > 12000 || typeof data.hash !== 'string' || (data.hash && !data.hash.startsWith('#'))) throw new Error('Некорректная ссылка на блок.');
+        if (typeof data.selector !== 'string' || data.selector.length > 12000 || typeof data.hash !== 'string' || (data.hash && !data.hash.startsWith('#'))) throw new Error(t('invalidBlockLink'));
         savedSelector = data.selector; automatic = true;
         history.replaceState(history.state, '', location.pathname + location.search + data.hash);
-      } catch (error) {notify(`Не удалось открыть ссылку: ${error.message}`); return;}
+      } catch (error) {notify(t('linkError', error.message)); return;}
     } else {
       const key = `selection:${location.href}`;
       savedSelector = (await chrome.storage.local.get(key))[key]?.selector;
@@ -303,7 +304,7 @@
     if (attempt()) return;
     const observer = new MutationObserver(() => {if (attempt()) observer.disconnect();});
     observer.observe(document.documentElement, {childList: true, subtree: true});
-    setTimeout(() => {observer.disconnect(); if (automatic && !selected) notify('Блок из ссылки не найден. Выберите его заново через значок расширения.');}, 15000);
+    setTimeout(() => {observer.disconnect(); if (automatic && !selected) notify(t('blockNotFound'));}, 15000);
   }
   window.addEventListener('hashchange', () => {
     if (!selected && location.hash.startsWith('#__sw_local=')) init().catch(error => notify(error.message));

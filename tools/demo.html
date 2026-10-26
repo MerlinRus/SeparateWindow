@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru"><meta charset="utf-8"><title>Studio Notes — demo page</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f5f8;color:#23334b;font:15px/1.5 "Segoe UI",system-ui,sans-serif}header{padding:20px 48px;background:#fff;border-bottom:1px solid #dde4ee;display:flex;justify-content:space-between;align-items:center}header strong{font-size:19px;letter-spacing:-.4px}header span{font-size:12px;color:#6b7c93}main{max-width:960px;margin:28px auto}h1{font-size:28px;letter-spacing:-.7px;margin:0 0 5px}p{margin:0 0 22px;color:#63758f}.video-card{background:#111b2b;border-radius:12px;overflow:hidden;box-shadow:0 12px 24px #24395712}video{display:block;width:960px;height:540px;background:#193957}.notes{display:flex;justify-content:space-between;padding:18px 0;font-size:13px}.notes b{font-weight:600}.notes span{color:#6b7c93}
+</style>
+<header><strong>Studio Notes</strong><span id="demo-label">Демонстрационная страница</span></header>
+<main><h1 id="heading">Свет и композиция в путешествии</h1><p id="description">Практикум по фотографии · Урок 4</p><div class="video-card"><video id="movie" autoplay muted controls playsinline></video></div><div class="notes"><b id="chapter">Золотой час у воды</b><span id="duration">Все иллюстрации созданы для демонстрации</span></div></main>
+<script>
+const english=new URLSearchParams(location.search).get('lang')==='en';
+if(english){document.documentElement.lang='en';document.querySelector('#demo-label').textContent='Demo page';document.querySelector('#heading').textContent='Light and composition on the road';document.querySelector('#description').textContent='Photography workshop · Lesson 4';document.querySelector('#chapter').textContent='Golden hour by the water';document.querySelector('#duration').textContent='Original artwork created for this demo'}
+const canvas=document.createElement('canvas');canvas.width=960;canvas.height=540;const c=canvas.getContext('2d');
+function draw(){c.fillStyle='#e5eff7';c.fillRect(0,0,960,540);c.fillStyle='#f5c88b';c.beginPath();c.arc(720,130,58,0,Math.PI*2);c.fill();
+c.fillStyle='#8ba7b8';c.beginPath();c.moveTo(0,310);c.lineTo(165,138);c.lineTo(345,309);c.lineTo(546,162);c.lineTo(740,300);c.lineTo(960,174);c.lineTo(960,540);c.lineTo(0,540);c.fill();
+c.fillStyle='#315b75';c.beginPath();c.moveTo(0,335);c.lineTo(150,244);c.lineTo(318,358);c.lineTo(490,232);c.lineTo(698,372);c.lineTo(960,240);c.lineTo(960,540);c.lineTo(0,540);c.fill();
+c.fillStyle='#527e91';c.fillRect(0,365,960,175);c.strokeStyle='#c7dce2';c.lineWidth=2;for(let y=390;y<540;y+=27){c.beginPath();c.moveTo(30,y);c.lineTo(930,y);c.stroke()}
+c.fillStyle='#183f52';c.beginPath();c.moveTo(0,428);c.bezierCurveTo(130,405,178,489,400,510);c.lineTo(470,540);c.lineTo(0,540);c.fill();
+c.fillStyle='#d9a36b';c.beginPath();c.moveTo(655,403);c.lineTo(762,403);c.lineTo(739,421);c.lineTo(676,421);c.fill();c.strokeStyle='#263f52';c.lineWidth=3;c.beginPath();c.moveTo(704,403);c.lineTo(704,340);c.stroke();c.fillStyle='#f6eee0';c.beginPath();c.moveTo(709,344);c.lineTo(748,395);c.lineTo(709,395);c.fill()}
+draw();setInterval(draw,100);document.querySelector('video').srcObject=canvas.captureStream(10);
+</script></html>

@@ -1,3 +1,4 @@
+const t = (key, substitutions) => chrome.i18n.getMessage(key, substitutions);
 const sessionKey = id => `window:${id}`;
 const selectionKey = url => `selection:${url}`;
 const supported = url => /^(https?|file):/.test(url || '');
@@ -6,7 +7,7 @@ async function tell(tabId, type) {
   try { return await chrome.tabs.sendMessage(tabId, {type}); }
   catch {
     const tab = await chrome.tabs.get(tabId);
-    if (!supported(tab.url)) throw new Error('На этой служебной странице Chrome расширения недоступны. Откройте обычный сайт.');
+    if (!supported(tab.url)) throw new Error(t('restrictedPage'));
     await chrome.scripting.executeScript({target: {tabId}, files: ['content.js']});
     return chrome.tabs.sendMessage(tabId, {type});
   }
@@ -48,7 +49,7 @@ async function restore(tabId) {
 async function detach(tab, message) {
   const key = sessionKey(tab.id);
   if ((await chrome.storage.session.get(key))[key]) return;
-  if (typeof message.selector !== 'string' || message.selector.length > 12000) throw new Error('Некорректная область.');
+  if (typeof message.selector !== 'string' || message.selector.length > 12000) throw new Error(t('invalidArea'));
   const pageUrl = tab.url.split('#__sw_local=')[0];
   const saved = (await chrome.storage.local.get(selectionKey(pageUrl)))[selectionKey(pageUrl)];
   const state = {originWindowId: tab.windowId, index: tab.index, url: pageUrl, incognito: tab.incognito, pinned: tab.pinned};
@@ -75,7 +76,7 @@ async function handle(message, sender) {
   // Content scripts may act only on their own tab; popup commands require an extension page.
   const extensionPage = !sender.tab && sender.url?.startsWith(chrome.runtime.getURL(''));
   const tabId = sender.tab?.id ?? (extensionPage ? message.tabId : undefined);
-  if (!Number.isInteger(tabId)) throw new Error('Нет активной вкладки.');
+  if (!Number.isInteger(tabId)) throw new Error(t('noActiveTab'));
   const tab = await chrome.tabs.get(tabId);
   const key = sessionKey(tabId);
   const state = (await chrome.storage.session.get(key))[key];
@@ -86,10 +87,10 @@ async function handle(message, sender) {
     case 'restore': return restore(tabId);
     case 'forget': return tell(tabId, 'forget');
     case 'detach':
-      if (!sender.tab) throw new Error('Выберите блок на странице.');
+      if (!sender.tab) throw new Error(t('selectFirst'));
       return detach(tab, message);
     case 'bounds': {
-      if (!state) throw new Error('Сначала вынесите блок в окно.');
+      if (!state) throw new Error(t('detachFirst'));
       const pageKey = selectionKey(tab.url);
       const saved = (await chrome.storage.local.get(pageKey))[pageKey] || {};
       const win = await chrome.windows.get(tab.windowId);
@@ -100,10 +101,10 @@ async function handle(message, sender) {
       return {saved: !!bounds};
     }
     case 'bookmark': {
-      if (!state || typeof message.url !== 'string') throw new Error('Сначала вынесите блок в окно.');
+      if (!state || typeof message.url !== 'string') throw new Error(t('detachFirst'));
       const link = new URL(message.url);
       const source = new URL(tab.url);
-      if (link.origin !== source.origin || link.pathname !== source.pathname || !supported(link.href)) throw new Error('Некорректная ссылка.');
+      if (link.origin !== source.origin || link.pathname !== source.pathname || !supported(link.href)) throw new Error(t('invalidLink'));
       const folders = await chrome.bookmarks.search({title: 'Separate windows'});
       let folder = folders.find(item => !item.url);
       if (!folder) folder = await chrome.bookmarks.create({title: 'Separate windows'});
@@ -111,12 +112,12 @@ async function handle(message, sender) {
       return;
     }
     case 'capture': {
-      if (!state) throw new Error('Нет отдельного окна.');
+      if (!state) throw new Error(t('noSeparateWindow'));
       const [active] = await chrome.tabs.query({active: true, windowId: tab.windowId});
-      if (active?.id !== tabId) throw new Error('Выбранная страница должна быть активна.');
+      if (active?.id !== tabId) throw new Error(t('activePageRequired'));
       return {image: await chrome.tabs.captureVisibleTab(tab.windowId, {format: 'png'})};
     }
-    default: throw new Error('Неизвестная команда.');
+    default: throw new Error(t('unknownCommand'));
   }
 }
 
@@ -125,7 +126,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   return true;
 });
 chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.removeAll(() => chrome.contextMenus.create({id: 'select', title: 'Separate Window — выбрать блок', contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*', 'file:///*']}));
+  chrome.contextMenus.removeAll(() => chrome.contextMenus.create({id: 'select', title: t('contextMenu'), contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*', 'file:///*']}));
 });
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'select') tell(tab.id, 'select').catch(console.error);

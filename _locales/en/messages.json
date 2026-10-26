@@ -1,0 +1,179 @@
+{
+  "extensionDescription": {
+    "message": "Open videos, widgets and other page elements in a separate window. No reloads, ads or page clutter."
+  },
+  "shortcutDescription": {
+    "message": "Select a block / return to tab"
+  },
+  "appTagline": {
+    "message": "More room for what matters"
+  },
+  "popupHeading": {
+    "message": "Any element. Its own window."
+  },
+  "popupIntro": {
+    "message": "Watch a video, follow a widget or focus on part of a page without the clutter."
+  },
+  "selectButton": {
+    "message": "Select a page element"
+  },
+  "pickerHelp": {
+    "message": "Point at an element. Scroll to adjust the selection, click to open it. Esc cancels."
+  },
+  "restoreButton": {
+    "message": "Return page to tab"
+  },
+  "forgetButton": {
+    "message": "Forget selection for this page"
+  },
+  "pageActions": {
+    "message": "Page actions"
+  },
+  "quickAccess": {
+    "message": "Keyboard shortcut"
+  },
+  "helpLink": {
+    "message": "Help"
+  },
+  "privacyLink": {
+    "message": "Privacy"
+  },
+  "commandFailed": {
+    "message": "The command could not be completed."
+  },
+  "unavailable": {
+    "message": "Extension unavailable. Reload the page."
+  },
+  "cannotSelect": {
+    "message": "This element cannot be selected."
+  },
+  "pickerHint": {
+    "message": "Point at an element → scroll to adjust → click to open. Esc cancels."
+  },
+  "cancel": {
+    "message": "Cancel"
+  },
+  "outsideViewport": {
+    "message": "The selected element is outside the visible area."
+  },
+  "pngFailed": {
+    "message": "Could not create the PNG image."
+  },
+  "controls": {
+    "message": "Separate window controls"
+  },
+  "returnShort": {
+    "message": "↩ Back to tab"
+  },
+  "returnTitle": {
+    "message": "Return page to tab without reloading"
+  },
+  "size": {
+    "message": "Size"
+  },
+  "sizeSaved": {
+    "message": "Size ✓"
+  },
+  "sizeTitle": {
+    "message": "Save or forget window size and position"
+  },
+  "sizeSavedNotice": {
+    "message": "Window size and position saved."
+  },
+  "sizeForgottenNotice": {
+    "message": "Saved window size removed."
+  },
+  "zoomOut": {
+    "message": "Zoom out"
+  },
+  "zoomIn": {
+    "message": "Zoom in"
+  },
+  "fit": {
+    "message": "Fit"
+  },
+  "fitTitle": {
+    "message": "Fit window / original size"
+  },
+  "rotateTitle": {
+    "message": "Rotate 90°"
+  },
+  "brightness": {
+    "message": "Brightness"
+  },
+  "snapshot": {
+    "message": "Snapshot"
+  },
+  "snapshotTitle": {
+    "message": "Save the visible element as PNG"
+  },
+  "bookmarkTitle": {
+    "message": "Bookmark in Separate windows"
+  },
+  "bookmarkSaved": {
+    "message": "Bookmark saved in Separate windows."
+  },
+  "link": {
+    "message": "Link"
+  },
+  "linkTitle": {
+    "message": "Get a link to reopen this element"
+  },
+  "linkHelp": {
+    "message": "This link opens the selected element when this extension is installed. Copy with Ctrl+C."
+  },
+  "blockLink": {
+    "message": "Link to element"
+  },
+  "close": {
+    "message": "Close"
+  },
+  "fullscreen": {
+    "message": "Full screen"
+  },
+  "hiddenBlock": {
+    "message": "The selected element is hidden. Select another element."
+  },
+  "marker": {
+    "message": "↗ Separate window"
+  },
+  "invalidBlockLink": {
+    "message": "Invalid element link."
+  },
+  "blockNotFound": {
+    "message": "Linked element not found. Select it again using the extension icon."
+  },
+  "restrictedPage": {
+    "message": "Extensions cannot access this Chrome page. Open a regular website."
+  },
+  "invalidArea": {
+    "message": "Invalid selection."
+  },
+  "noActiveTab": {
+    "message": "No active tab."
+  },
+  "selectFirst": {
+    "message": "Select an element on the page."
+  },
+  "detachFirst": {
+    "message": "Open an element in a separate window first."
+  },
+  "invalidLink": {
+    "message": "Invalid link."
+  },
+  "noSeparateWindow": {
+    "message": "No separate window."
+  },
+  "activePageRequired": {
+    "message": "The selected page must be active."
+  },
+  "unknownCommand": {
+    "message": "Unknown command."
+  },
+  "contextMenu": {
+    "message": "Separate Window — select element"
+  },
+  "linkError": {
+    "message": "Could not open link: $1"
+  }
+}

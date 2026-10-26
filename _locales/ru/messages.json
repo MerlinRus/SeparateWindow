@@ -1,0 +1,179 @@
+{
+  "extensionDescription": {
+    "message": "Открывайте видео, виджеты и другие блоки страницы в отдельном окне. Без перезагрузки, рекламы и лишнего фона."
+  },
+  "shortcutDescription": {
+    "message": "Выбрать блок / вернуть во вкладку"
+  },
+  "appTagline": {
+    "message": "Больше места для главного"
+  },
+  "popupHeading": {
+    "message": "Любой блок — отдельное окно"
+  },
+  "popupIntro": {
+    "message": "Смотрите видео, следите за виджетом или работайте с частью страницы без лишнего вокруг."
+  },
+  "selectButton": {
+    "message": "Выбрать блок на странице"
+  },
+  "pickerHelp": {
+    "message": "Наведите на блок. Колесо меняет область, щелчок открывает окно. Esc — отмена."
+  },
+  "restoreButton": {
+    "message": "Вернуть страницу во вкладку"
+  },
+  "forgetButton": {
+    "message": "Забыть выбор для этой страницы"
+  },
+  "pageActions": {
+    "message": "Действия со страницей"
+  },
+  "quickAccess": {
+    "message": "Быстрый вызов"
+  },
+  "helpLink": {
+    "message": "Помощь"
+  },
+  "privacyLink": {
+    "message": "Конфиденциальность"
+  },
+  "commandFailed": {
+    "message": "Не удалось выполнить команду."
+  },
+  "unavailable": {
+    "message": "Расширение недоступно. Перезагрузите страницу."
+  },
+  "cannotSelect": {
+    "message": "Этот элемент выбрать нельзя."
+  },
+  "pickerHint": {
+    "message": "Наведите на блок → колесо меняет область → щелчок выносит в окно. Esc — отмена."
+  },
+  "cancel": {
+    "message": "Отмена"
+  },
+  "outsideViewport": {
+    "message": "Выбранный блок вне видимой области."
+  },
+  "pngFailed": {
+    "message": "Не удалось создать PNG."
+  },
+  "controls": {
+    "message": "Управление отдельным окном"
+  },
+  "returnShort": {
+    "message": "↩ Во вкладку"
+  },
+  "returnTitle": {
+    "message": "Вернуть страницу во вкладку без перезагрузки"
+  },
+  "size": {
+    "message": "Размер"
+  },
+  "sizeSaved": {
+    "message": "Размер ✓"
+  },
+  "sizeTitle": {
+    "message": "Сохранить или забыть размер и положение окна"
+  },
+  "sizeSavedNotice": {
+    "message": "Размер и положение сохранены."
+  },
+  "sizeForgottenNotice": {
+    "message": "Сохранённый размер удалён."
+  },
+  "zoomOut": {
+    "message": "Уменьшить"
+  },
+  "zoomIn": {
+    "message": "Увеличить"
+  },
+  "fit": {
+    "message": "Вписать"
+  },
+  "fitTitle": {
+    "message": "Вписать в окно / исходный масштаб"
+  },
+  "rotateTitle": {
+    "message": "Повернуть на 90°"
+  },
+  "brightness": {
+    "message": "Яркость"
+  },
+  "snapshot": {
+    "message": "Снимок"
+  },
+  "snapshotTitle": {
+    "message": "Сохранить видимую область блока в PNG"
+  },
+  "bookmarkTitle": {
+    "message": "Сохранить в закладки Separate windows"
+  },
+  "bookmarkSaved": {
+    "message": "Закладка сохранена в Separate windows."
+  },
+  "link": {
+    "message": "Ссылка"
+  },
+  "linkTitle": {
+    "message": "Получить ссылку для повторного открытия этого блока"
+  },
+  "linkHelp": {
+    "message": "Ссылка открывает выбранный блок, если это расширение установлено. Скопируйте Ctrl+C."
+  },
+  "blockLink": {
+    "message": "Ссылка на блок"
+  },
+  "close": {
+    "message": "Закрыть"
+  },
+  "fullscreen": {
+    "message": "Полный экран"
+  },
+  "hiddenBlock": {
+    "message": "Выбранный блок скрыт. Выберите другой."
+  },
+  "marker": {
+    "message": "↗ В отдельное окно"
+  },
+  "invalidBlockLink": {
+    "message": "Некорректная ссылка на блок."
+  },
+  "blockNotFound": {
+    "message": "Блок из ссылки не найден. Выберите его заново через значок расширения."
+  },
+  "restrictedPage": {
+    "message": "На этой служебной странице Chrome расширения недоступны. Откройте обычный сайт."
+  },
+  "invalidArea": {
+    "message": "Некорректная область."
+  },
+  "noActiveTab": {
+    "message": "Нет активной вкладки."
+  },
+  "selectFirst": {
+    "message": "Выберите блок на странице."
+  },
+  "detachFirst": {
+    "message": "Сначала вынесите блок в окно."
+  },
+  "invalidLink": {
+    "message": "Некорректная ссылка."
+  },
+  "noSeparateWindow": {
+    "message": "Нет отдельного окна."
+  },
+  "activePageRequired": {
+    "message": "Выбранная страница должна быть активна."
+  },
+  "unknownCommand": {
+    "message": "Неизвестная команда."
+  },
+  "contextMenu": {
+    "message": "Separate Window — выбрать блок"
+  },
+  "linkError": {
+    "message": "Не удалось открыть ссылку: $1"
+  }
+}

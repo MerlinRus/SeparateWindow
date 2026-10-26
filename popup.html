@@ -1,17 +1,33 @@
 <!doctype html>
 <html lang="ru">
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Separate Window</title>
-<link rel="stylesheet" href="popup.css">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Separate Window</title>
+  <link rel="icon" type="image/png" href="icons/icon32.png">
+  <link rel="stylesheet" href="popup.css">
+</head>
 <body>
-  <header><span class="logo">↗</span><div><strong>Separate Window</strong><small>Любой блок — в отдельное окно</small></div></header>
-  <button id="select" class="primary">Выбрать блок на странице</button>
-  <p>Наведите на видео, виджет или другой блок. Колесо мыши меняет область. Нажмите для выбора, Esc — отмена.</p>
-  <button id="restore">Вернуть страницу во вкладку</button>
-  <button id="forget">Забыть выбор для этой страницы</button>
-  <footer>Быстрый вызов: <kbd>Alt + Shift + S</kbd></footer>
-  <div id="status" role="status"></div>
+  <header class="app-header">
+    <img src="icons/icon48.png" width="40" height="40" alt="">
+    <div><h1>Separate Window</h1><p data-i18n="appTagline">Больше места для главного</p></div>
+    <span class="version" id="version"></span>
+  </header>
+  <main>
+    <section class="selection" aria-labelledby="selection-title">
+      <h2 id="selection-title" data-i18n="popupHeading">Любой блок — отдельное окно</h2>
+      <p data-i18n="popupIntro">Смотрите видео, следите за виджетом или работайте с частью страницы без лишнего вокруг.</p>
+      <button id="select" class="primary"><span aria-hidden="true">↗</span><span data-i18n="selectButton">Выбрать блок на странице</span></button>
+      <div class="selection-hint"><span aria-hidden="true">⌖</span><p data-i18n="pickerHelp">Наведите на блок. Колесо меняет область, щелчок открывает окно. Esc — отмена.</p></div>
+    </section>
+    <section class="page-actions" aria-label="Page actions" data-i18n-label="pageActions">
+      <button id="restore" class="secondary"><span aria-hidden="true">↩</span><span data-i18n="restoreButton">Вернуть страницу во вкладку</span></button>
+      <button id="forget" class="quiet" data-i18n="forgetButton">Забыть выбор для этой страницы</button>
+    </section>
+    <div id="status" role="status" aria-live="polite"></div>
+    <div class="shortcut"><span data-i18n="quickAccess">Быстрый вызов</span><kbd>Alt</kbd><span>+</span><kbd>Shift</kbd><span>+</span><kbd>S</kbd></div>
+  </main>
+  <footer><span>Mycelium</span><nav><a href="https://github.com/MerlinRus/SeparateWindow#readme" target="_blank" rel="noopener noreferrer" data-i18n="helpLink">Помощь</a><a href="https://merlinrus.github.io/SeparateWindow/privacy.html" target="_blank" rel="noopener noreferrer" data-i18n="privacyLink">Конфиденциальность</a></nav></footer>
   <script src="popup.js"></script>
 </body>
 </html>
