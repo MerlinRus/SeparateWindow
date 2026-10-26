@@ -1,4 +1,4 @@
-# Chrome Web Store listing — Separate Window 1.1.1
+# Chrome Web Store listing — Separate Window 1.2.0
 
 Publisher: **Mycelium**. Support: **qobuz43@gmail.com**.
 Category: Productivity. Default language: Russian. Additional locale: English.
@@ -21,6 +21,7 @@ Features:
 - Move the current tab into a popup without reloading the page.
 - Show only the selected element; temporarily hide surrounding page decoration.
 - Translucent controls appear over the content when you hover over their area.
+- “Always on top” opens video in Chrome picture-in-picture, including videos in nested players.
 - Return the live page to a regular tab with “Back to tab”.
 - Recover the page as a regular tab after closing the popup with its native close button.
 - Remember window size and position for individual pages.
@@ -34,7 +35,7 @@ The extension runs locally, with no registration, ads, analytics or data sent to
 
 Limitations:
 - Native close recovers the page by reloading it. Use “Back to tab” to keep the live page without reloading.
-- Regular popup windows do not stay above all other applications.
+- Only video floats above other applications in a separate PiP window with Chrome controls. Site controls and subtitles may not appear; some players block PiP. The regular popup containing an arbitrary element is not pinned.
 - Embedded iframes are selected as a whole. Compatibility with every website or DRM player is not guaranteed.
 - Chrome internal pages and the Chrome Web Store restrict extension access.
 

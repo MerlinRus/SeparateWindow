@@ -254,6 +254,22 @@ def main():
             click_control('Повернуть на 90°')
             print('PASS: saved window geometry, rotation')
 
+            before_pip = page.locator('video').evaluate('(v)=>v.currentTime')
+            click_control('Показать видео поверх всех окон (картинка в картинке)')
+            page.wait_for_function('document.pictureInPictureElement === document.querySelector("video")', timeout=5000)
+            assert control('Вернуть видео из режима картинки в картинке', 'function(){return this.getAttribute("aria-pressed")}') == 'true'
+            assert page.evaluate('window.identity') == identity
+            assert page.locator('video').evaluate('(v)=>v.currentTime') >= before_pip
+            click_control('Вернуть видео из режима картинки в картинке')
+            page.wait_for_function('!document.pictureInPictureElement')
+            assert control('Показать видео поверх всех окон (картинка в картинке)', 'function(){return this.getAttribute("aria-pressed")}') == 'false'
+            click_control('Показать видео поверх всех окон (картинка в картинке)')
+            page.wait_for_function('!!document.pictureInPictureElement')
+            page.evaluate('document.exitPictureInPicture()')
+            page.wait_for_timeout(200)
+            assert control('Показать видео поверх всех окон (картинка в картинке)', 'function(){return this.getAttribute("aria-pressed")}') == 'false', 'Native PiP close must reset the button'
+            print('PASS: video PiP toggle, original DOM/playback preserved, native close updates button')
+
             with page.expect_download() as download:
                 click_control('Сохранить видимую область блока в PNG')
             path = Path(download.value.path())

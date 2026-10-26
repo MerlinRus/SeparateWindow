@@ -73,6 +73,52 @@ async function detach(tab, message) {
   }
 }
 
+async function toggleVideoPin(tabId, selector, frameRoots) {
+  // Frame index paths use only cross-origin-safe WindowProxy properties. No navigation permission is needed.
+  const frames = await chrome.scripting.executeScript({target: {tabId, allFrames: true}, args: [selector, frameRoots], func: (selector, roots) => {
+    const path = [];
+    for (let win = window; win !== win.top; win = win.parent) {
+      let index = 0;
+      while (index < win.parent.length && win.parent[index] !== win) index++;
+      path.unshift(index);
+    }
+    const key = path.join('.');
+    if (path.length && !roots.some(root => key === root || key.startsWith(root + '.'))) return null;
+    const scope = path.length ? document : document.querySelector(selector);
+    if (!scope) return null;
+    const videos = [...document.querySelectorAll('video')];
+    const candidates = videos.map((video, index) => {
+      if (!scope.contains(video)) return null;
+      const rect = video.getBoundingClientRect(), style = getComputedStyle(video);
+      const active = document.pictureInPictureElement === video;
+      if (!active && (!video.videoWidth || !video.readyState || rect.width <= 0 || rect.height <= 0 || style.visibility === 'hidden' || style.display === 'none')) return null;
+      return {index, area: rect.width * rect.height, active};
+    }).filter(Boolean).sort((a, b) => Number(b.active) - Number(a.active) || b.area - a.area);
+    return candidates[0] || null;
+  }});
+  const candidate = frames.filter(frame => frame.result).sort((a, b) => Number(b.result.active) - Number(a.result.active) || b.result.area - a.result.area)[0];
+  if (!candidate) throw new Error(t('pipNoVideo'));
+  const [result] = await chrome.scripting.executeScript({target: {tabId, documentIds: [candidate.documentId]}, args: [candidate.result.index], func: async index => {
+    const video = document.querySelectorAll('video')[index];
+    if (!video) return {error: 'pipNoVideo'};
+    try {
+      if (document.pictureInPictureElement === video) {
+        await document.exitPictureInPicture();
+        return {active: false};
+      }
+      if (!document.pictureInPictureEnabled || video.disablePictureInPicture) return {error: 'pipBlocked'};
+      await video.requestPictureInPicture();
+      video.addEventListener('leavepictureinpicture', () => {
+        chrome.runtime.sendMessage({type: 'pip-state', active: false}).catch(() => {});
+      }, {once: true});
+      return {active: true};
+    } catch {return {error: 'pipBlocked'};}
+  }});
+  if (result?.result?.error) throw new Error(t(result.result.error));
+  if (!result?.result) throw new Error(t('pipBlocked'));
+  return result.result;
+}
+
 async function handle(message, sender) {
   // Content scripts may act only on their own tab; popup commands require an extension page.
   const extensionPage = !sender.tab && sender.url?.startsWith(chrome.runtime.getURL(''));
@@ -82,6 +128,13 @@ async function handle(message, sender) {
   const key = sessionKey(tabId);
   const state = (await chrome.storage.session.get(key))[key];
   switch (message.type) {
+    case 'video-pin': {
+      if (!state || sender.frameId !== 0 || typeof message.selector !== 'string' || message.selector.length > 12000 || !Array.isArray(message.frameRoots) || !message.frameRoots.every(root => typeof root === 'string' && /^\d+$/.test(root))) throw new Error(t('detachFirst'));
+      return toggleVideoPin(tabId, message.selector, message.frameRoots);
+    }
+    case 'pip-state':
+      if (sender.tab) await chrome.tabs.sendMessage(tabId, {type: 'pip-state', active: false}, {frameId: 0}).catch(() => {});
+      return;
     case 'window-state': return {detached: !!state && state.popupWindowId === tab.windowId, selector: state?.selector};
     case 'select':
       if (state) return restore(tabId);

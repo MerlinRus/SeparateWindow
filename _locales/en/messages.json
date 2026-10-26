@@ -173,6 +173,12 @@
   "contextMenu": {
     "message": "Separate Window — select element"
   },
+  "pin": {"message": "📌 Always on top"},
+  "unpin": {"message": "📌 Return video"},
+  "pinTitle": {"message": "Show video above all windows (picture-in-picture)"},
+  "unpinTitle": {"message": "Return video from picture-in-picture"},
+  "pipNoVideo": {"message": "No ready video in the selected element. Start playback and try again. This mode is unavailable for images and widgets."},
+  "pipBlocked": {"message": "The player or browser does not allow picture-in-picture for this video."},
   "linkError": {
     "message": "Could not open link: $1"
   }

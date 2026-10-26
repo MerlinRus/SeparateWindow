@@ -1,4 +1,4 @@
-# Privacy practices — Separate Window 1.1.1
+# Privacy practices — Separate Window 1.2.0
 
 Publisher: Mycelium. Contact: qobuz43@gmail.com.
 
@@ -19,6 +19,8 @@ Stores per-page CSS selectors and optional window geometry locally. Uses session
 ### scripting
 
 Injects packaged selection/isolation code into already-open pages when no active content-script listener is available. The user starts selection through the extension button, shortcut or context menu. No remote JavaScript is injected.
+
+On an explicit “Always on top” click, packaged code also locates a ready video within the selected block and its descendant frames and toggles Chrome's built-in picture-in-picture API. Frame paths, video dimensions and temporary playback availability are processed in memory only. No video stream is captured or sent to the extension or developer.
 
 ### contextMenus
 

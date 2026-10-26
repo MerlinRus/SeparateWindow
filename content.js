@@ -7,7 +7,7 @@
   const ancestorAttr = `data-${token}-ancestor`;
   let selected, selector, sourceUrl, initialSize, cropStyle, ui, shadow, picker;
   let ancestors = [], scale = 1, rotation = 0, brightness = 1, fit = true;
-  let marker, markerTarget, savedSelector, noticeTimer, detached = false;
+  let marker, markerTarget, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false;
 
   async function send(type, extra = {}) {
     const result = await chrome.runtime.sendMessage({type, ...extra});
@@ -198,10 +198,20 @@
     function button(text, title, action) {
       const button = document.createElement('button'); button.textContent = text; button.title = title;
       button.setAttribute('aria-label', title);
-      button.onclick = async () => {try {await action(button); renderCrop();} catch (error) {notify(error.message);}};
+      button.onclick = async () => {if (button.disabled) return; button.disabled = true; try {await action(button); renderCrop();} catch (error) {notify(error.message);} finally {button.disabled = false;}};
       bar.append(button);
+      return button;
     }
     button(t('returnShort'), t('returnTitle'), () => send('restore'));
+    pinButton = button(t('pin'), t('pinTitle'), async () => {
+      const frames = [...document.querySelectorAll('iframe,frame')].filter(frame => selected.contains(frame));
+      const frameRoots = frames.map(frame => {
+        for (let index = 0; index < window.length; index++) if (window[index] === frame.contentWindow) return String(index);
+      }).filter(root => root !== undefined);
+      const result = await send('video-pin', {selector, frameRoots});
+      setPinState(result.active);
+    });
+    setPinState(pipActive);
     button(t('size'), t('sizeTitle'), async button => {
       const result = await send('bounds'); button.textContent = result.saved ? t('sizeSaved') : t('size');
       notify(result.saved ? t('sizeSavedNotice') : t('sizeForgottenNotice'));
@@ -224,6 +234,15 @@
     });
     button('⛶', t('fullscreen'), () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen());
     shadow.append(bar);
+  }
+
+  function setPinState(active) {
+    pipActive = active;
+    if (!pinButton) return;
+    pinButton.textContent = t(active ? 'unpin' : 'pin');
+    pinButton.title = t(active ? 'unpinTitle' : 'pinTitle');
+    pinButton.setAttribute('aria-label', pinButton.title);
+    pinButton.setAttribute('aria-pressed', String(active));
   }
 
   async function openElement(element) {
@@ -271,6 +290,7 @@
         Promise.resolve(startPicker()).then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
         return true;
       case 'uncrop': unCrop(false); break;
+      case 'pip-state': setPinState(message.active); break;
       case 'returned': detached = false; installMarker(savedSelector); break;
       case 'forget':
         chrome.storage.local.remove(`selection:${location.href}`).catch(error => notify(error.message));
