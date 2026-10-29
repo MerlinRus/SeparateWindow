@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Separate Window",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "__MSG_extensionDescription__",
   "default_locale": "ru",
   "author": "Mycelium",
-  "homepage_url": "https://github.com/MerlinRus/SeparateWindow",
+  "homepage_url": "https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm",
   "minimum_chrome_version": "120",
   "permissions": ["tabs", "scripting", "storage", "contextMenus", "bookmarks"],
   "host_permissions": ["<all_urls>"],

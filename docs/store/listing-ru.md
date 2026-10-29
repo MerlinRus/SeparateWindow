@@ -1,4 +1,4 @@
-# Карточка Chrome Web Store — Separate Window 1.2.0
+# Карточка Chrome Web Store — Separate Window 1.2.1
 
 Издатель: **Mycelium**. Поддержка: **qobuz43@gmail.com**.
 Основной язык: русский. Дополнительный: английский.
