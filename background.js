@@ -1,3 +1,4 @@
+importScripts('media.js');
 const t = (key, substitutions) => chrome.i18n.getMessage(key, substitutions);
 const sessionKey = id => `window:${id}`;
 const selectionKey = url => `selection:${url}`;
@@ -32,6 +33,7 @@ async function removePlaceholder(state) {
 async function restore(tabId) {
   const key = sessionKey(tabId);
   const state = (await chrome.storage.session.get(key))[key];
+  await chrome.scripting.executeScript({target: {tabId, allFrames:true}, func:cleanMediaFrame, args:['', [], false]}).catch(() => {});
   await tell(tabId, 'uncrop').catch(() => {});
   if (!state) {await tell(tabId, 'returned').catch(() => {}); return;}
   const origin = await findOrigin(state);
@@ -128,6 +130,13 @@ async function handle(message, sender) {
   const key = sessionKey(tabId);
   const state = (await chrome.storage.session.get(key))[key];
   switch (message.type) {
+    case 'clean-media': {
+      if (!state || sender.frameId !== 0 || typeof message.selector !== 'string' || message.selector.length > 12000 || !Array.isArray(message.frameRoots) || !message.frameRoots.every(root => typeof root === 'string' && /^\d+$/.test(root))) throw new Error(t('detachFirst'));
+      const probes = message.enabled === false ? [] : await chrome.scripting.executeScript({target:{tabId, allFrames:true}, func:cleanMediaFrame, args:[message.selector, message.frameRoots, 'probe']});
+      const paths = probes.map(frame => frame.result).filter(path => typeof path === 'string');
+      await chrome.scripting.executeScript({target:{tabId, allFrames:true}, func:cleanMediaFrame, args:[message.selector, message.frameRoots, message.enabled !== false, paths]});
+      return;
+    }
     case 'video-pin': {
       if (!state || sender.frameId !== 0 || typeof message.selector !== 'string' || message.selector.length > 12000 || !Array.isArray(message.frameRoots) || !message.frameRoots.every(root => typeof root === 'string' && /^\d+$/.test(root))) throw new Error(t('detachFirst'));
       return toggleVideoPin(tabId, message.selector, message.frameRoots);

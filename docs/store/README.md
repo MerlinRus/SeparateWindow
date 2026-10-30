@@ -1,11 +1,11 @@
-# Публикация Separate Window 1.2.1
+# Публикация Separate Window 1.3.0
 
 Издатель: **Mycelium**. Поддержка: **qobuz43@gmail.com**.
 Подготовлено по тому же принципу, что Mycelium Autofill: чистый ZIP расширения и отдельный комплект материалов RU/EN.
 
 ## Что загружать
 
-1. **Пакет расширения:** `dist/separate-window-1.2.1.zip`. В корне лежит manifest.json; тестов, документации и исходных SVG в пакете нет.
+1. **Пакет расширения:** `dist/separate-window-1.3.0.zip`. В корне лежит manifest.json; тестов, документации и исходных SVG в пакете нет.
 2. **Иконка карточки:** `assets/icon128.png` — PNG 128×128, прозрачный отступ 16 px, знак 96×96.
 3. **Скриншоты:** `assets/screenshot-01-select-ru.png`, `screenshot-02-window-ru.png`, `screenshot-03-app-ru.png`. Для английской локали — соответствующие `-en.png`. Все 1280×800, PNG RGB. Это работающий интерфейс на собственных демо-данных; третий кадр оформляет настоящий снимок popup как презентацию приложения.
 4. **Малое промо:** `assets/promo-440x280.png`. Дополнительное большое промо: `assets/promo-1400x560.png`.
@@ -13,12 +13,12 @@
 6. **Privacy practices:** `privacy-fields.md`; инструкции проверки — `reviewer-instructions.md`.
 7. **Privacy policy URL:** https://merlinrus.github.io/SeparateWindow/privacy.html
 
-Комплект `dist/chrome-web-store-materials-1.2.1.zip` содержит изображения и тексты. **Его не нужно загружать как пакет расширения.**
+Комплект `dist/chrome-web-store-materials-1.3.0.zip` содержит изображения и тексты. **Его не нужно загружать как пакет расширения.**
 
 ## В кабинете Chrome Web Store
 
 1. В аккаунте издателя Mycelium откройте существующую карточку Separate Window с ID `fhcafcdfknddjfgbbkhpglgamceiclcm`. ZIP Separate Window нельзя загружать обновлением Mycelium Autofill.
-2. Загрузите `separate-window-1.2.1.zip`.
+2. Загрузите `separate-window-1.3.0.zip`.
 3. Укажите название Separate Window, категорию Productivity, язык RU, описания и поддержку qobuz43@gmail.com. Добавьте EN-локаль и её изображения/описание.
 4. Загрузите иконку, три скриншота и промо. Укажите публичную политику и заполните поля по privacy-fields.md.
 5. Вставьте reviewer-instructions.md. Доступы и тестовый аккаунт не требуются.

@@ -1,4 +1,4 @@
-# Chrome Web Store listing — Separate Window 1.2.1
+# Chrome Web Store listing — Separate Window 1.3.0
 
 Publisher: **Mycelium**. Support: **qobuz43@gmail.com**.
 Category: Productivity. Default language: Russian. Additional locale: English.
@@ -21,6 +21,7 @@ Features:
 - Move the current tab into a popup without reloading the page.
 - Show only the selected element; temporarily hide surrounding page decoration.
 - Translucent controls appear over the content when you hover over their area.
+- Video-only mode hides player panels; “Show player” restores site controls without reloading. Also supports accessible HTML video inside nested frames.
 - “Always on top” opens video in Chrome picture-in-picture, including videos in nested players.
 - Return the live page to a regular tab with “Back to tab”.
 - Recover the page as a regular tab after closing the popup with its native close button.

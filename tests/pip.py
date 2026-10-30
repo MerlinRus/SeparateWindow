@@ -20,8 +20,8 @@ class PipHandler(Handler):
                 <video id="decoy" autoplay muted></video><section id="empty">No video</section>
                 <iframe id="player" src="http://localhost:{port}/nested"></iframe>''' + STREAM,
             '/nested': f'''<style>body{{margin:0}}iframe{{width:100%;height:100%;border:0}}</style>
-                <iframe src="http://127.0.0.1:{port}/video"></iframe>''',
-            '/video': '<style>body{margin:0}video{width:100%;height:100%}</style><video autoplay muted></video>' + STREAM,
+                <iframe src="http://127.0.0.1:{port}/video"></iframe><button id="frame-panel" style="position:fixed;top:0">Season</button>''',
+            '/video': '<style>body{margin:0}video{width:100%;height:100%}#player-panel{position:fixed;inset:0;background:#0004}</style><video autoplay muted controls></video><div id="player-panel"><select><option>Season 6</option></select><button>Next episode</button></div>' + STREAM,
         }
         if self.path not in pages:
             return super().do_GET()
@@ -41,7 +41,7 @@ def main():
                 args=[f'--disable-extensions-except={ROOT}', f'--load-extension={ROOT}'])
             try:
                 worker = context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
-                labels = worker.evaluate("Object.fromEntries(['pinTitle','unpinTitle','pipNoVideo','pipBlocked'].map(k=>[k,chrome.i18n.getMessage(k)]))")
+                labels = worker.evaluate("Object.fromEntries(['pinTitle','unpinTitle','pipNoVideo','pipBlocked','showPlayer','onlyVideo'].map(k=>[k,chrome.i18n.getMessage(k)]))")
                 page = context.pages[0]
                 page.goto(url)
                 video_frame = next(frame for frame in page.frames if frame.url.endswith('/video'))
@@ -73,6 +73,21 @@ def main():
                     page.mouse.move(*rect)
                     page.mouse.click(*rect)
 
+                nested_frame = next(frame for frame in page.frames if frame.url.endswith('/nested'))
+                video_frame.locator('#player-panel').wait_for(state='hidden')
+                assert not nested_frame.locator('#frame-panel').is_visible()
+                assert not video_frame.locator('video').evaluate('(v)=>v.controls')
+                assert page.locator('#player').evaluate('(e)=>getComputedStyle(e).borderTopWidth') == '0px'
+                button('showPlayer')
+                video_frame.locator('#player-panel').wait_for(state='visible')
+                assert nested_frame.locator('#frame-panel').is_visible()
+                assert video_frame.locator('video').evaluate('(v)=>v.controls')
+                button('onlyVideo')
+                video_frame.locator('#player-panel').wait_for(state='hidden')
+                assert not video_frame.locator('video').evaluate('(v)=>v.controls')
+                assert video_frame.evaluate('window.identity') == identity
+                page.screenshot(path=str(ROOT/'tests/clean-video.png'))
+                print('PASS: player overlays and native controls hidden across nested frames; reversible without reload', flush=True)
                 button('pinTitle')
                 video_frame.wait_for_function('!!document.pictureInPictureElement', timeout=5000)
                 assert not page.evaluate('!!document.pictureInPictureElement'), 'A larger unrelated video must never be selected'
@@ -96,6 +111,9 @@ def main():
                 print('PASS: player PiP restriction is respected and explained', flush=True)
 
                 worker.evaluate('''async url => {const [tab]=await chrome.tabs.query({url});await restore(tab.id);await tell(tab.id,'select')}''', url)
+                assert video_frame.locator('#player-panel').is_visible()
+                assert nested_frame.locator('#frame-panel').is_visible()
+                assert video_frame.locator('video').evaluate('(v)=>v.controls')
                 box = page.locator('#empty').bounding_box()
                 page.mouse.click(box['x'] + 20, box['y'] + box['height'] / 2)
                 page.wait_for_function('document.querySelector("#empty").getAttributeNames().some(x=>x.endsWith("-target"))')

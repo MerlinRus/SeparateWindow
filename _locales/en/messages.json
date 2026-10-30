@@ -173,6 +173,8 @@
   "contextMenu": {
     "message": "Separate Window — select element"
   },
+  "showPlayer": {"message": "Show player"},
+  "onlyVideo": {"message": "Video only"},
   "pin": {"message": "📌 Always on top"},
   "unpin": {"message": "📌 Return video"},
   "pinTitle": {"message": "Show video above all windows (picture-in-picture)"},

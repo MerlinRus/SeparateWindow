@@ -7,7 +7,7 @@
   const ancestorAttr = `data-${token}-ancestor`;
   let selected, selector, sourceUrl, initialSize, cropStyle, ui, shadow, picker;
   let ancestors = [], scale = 1, rotation = 0, brightness = 1, fit = true;
-  let marker, markerTarget, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false;
+  let marker, markerTarget, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false, cleanVideo = true;
 
   async function send(type, extra = {}) {
     const result = await chrome.runtime.sendMessage({type, ...extra});
@@ -203,12 +203,15 @@
       return button;
     }
     button(t('returnShort'), t('returnTitle'), () => send('restore'));
+    button(t('showPlayer'), t('showPlayer'), async button => {
+      const enabled = !cleanVideo;
+      await send('clean-media', {selector, frameRoots: mediaFrameRoots(), enabled});
+      cleanVideo = enabled;
+      button.textContent = t(enabled ? 'showPlayer' : 'onlyVideo');
+      button.title = button.textContent; button.setAttribute('aria-label', button.title);
+    });
     pinButton = button(t('pin'), t('pinTitle'), async () => {
-      const frames = [...document.querySelectorAll('iframe,frame')].filter(frame => selected.contains(frame));
-      const frameRoots = frames.map(frame => {
-        for (let index = 0; index < window.length; index++) if (window[index] === frame.contentWindow) return String(index);
-      }).filter(root => root !== undefined);
-      const result = await send('video-pin', {selector, frameRoots});
+      const result = await send('video-pin', {selector, frameRoots: mediaFrameRoots()});
       setPinState(result.active);
     });
     setPinState(pipActive);
@@ -255,9 +258,18 @@
     removeMarker(); selected.setAttribute(targetAttr, '');
     for (let ancestor = selected.parentElement; ancestor; ancestor = ancestor.parentElement) {ancestor.setAttribute(ancestorAttr, ''); ancestors.push(ancestor);}
     cropStyle = document.createElement('style'); document.documentElement.append(cropStyle);
-    toolbar(); renderCrop();
-    try {await send('detach', {selector, width: rect.width, height: rect.height}); detached = true;}
+    cleanVideo = true; toolbar(); renderCrop();
+    try {
+      await send('detach', {selector, width: rect.width, height: rect.height}); detached = true;
+      await send('clean-media', {selector, frameRoots: mediaFrameRoots()}).catch(error => notify(error.message));
+    }
     catch (error) {unCrop(); throw error;}
+  }
+
+  function mediaFrameRoots() {
+    return [...document.querySelectorAll('iframe,frame')].filter(frame => selected.contains(frame)).map(frame => {
+      for (let index = 0; index < window.length; index++) if (window[index] === frame.contentWindow) return String(index);
+    }).filter(root => root !== undefined);
   }
 
   function positionMarker() {
@@ -283,6 +295,11 @@
 
   window.addEventListener('resize', () => {renderCrop(); positionMarker();});
   window.addEventListener('scroll', positionMarker, {passive: true, capture: true});
+  document.addEventListener('load', event => {
+    if (selected && cleanVideo && event.target.localName === 'iframe' && selected.contains(event.target)) {
+      send('clean-media', {selector, frameRoots: mediaFrameRoots()}).catch(error => notify(error.message));
+    }
+  }, true);
   chrome.runtime.onMessage.addListener((message, sender, respond) => {
     if (sender.id !== chrome.runtime.id) return;
     switch (message.type) {

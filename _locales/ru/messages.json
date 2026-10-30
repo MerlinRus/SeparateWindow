@@ -173,6 +173,8 @@
   "contextMenu": {
     "message": "Separate Window — выбрать блок"
   },
+  "showPlayer": {"message": "Показать плеер"},
+  "onlyVideo": {"message": "Только видео"},
   "pin": {"message": "📌 Поверх всех"},
   "unpin": {"message": "📌 Вернуть видео"},
   "pinTitle": {"message": "Показать видео поверх всех окон (картинка в картинке)"},

@@ -8,7 +8,7 @@ manifest = json.loads((ROOT / 'manifest.json').read_text(encoding='utf-8'))
 destination = ROOT / 'dist'
 destination.mkdir(exist_ok=True)
 package = destination / f'separate-window-{manifest["version"]}.zip'
-files = [ROOT / name for name in ('manifest.json','background.js','content.js','popup.html','popup.css','popup.js')]
+files = [ROOT / name for name in ('manifest.json','background.js','content.js','media.js','popup.html','popup.css','popup.js')]
 files += [ROOT / path for path in sorted(set(manifest['icons'].values()))]
 files += sorted((ROOT / '_locales').glob('*/messages.json'))
 with zipfile.ZipFile(package, 'w', zipfile.ZIP_DEFLATED) as archive:
