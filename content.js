@@ -7,7 +7,7 @@
   const ancestorAttr = `data-${token}-ancestor`;
   let selected, selector, sourceUrl, initialSize, cropStyle, ui, shadow, picker;
   let ancestors = [], scale = 1, rotation = 0, brightness = 1, fit = true;
-  let marker, markerTarget, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false, cleanVideo = true;
+  let marker, markerTarget, markerEvents, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false, cleanVideo = true;
 
   async function send(type, extra = {}) {
     const result = await chrome.runtime.sendMessage({type, ...extra});
@@ -33,7 +33,8 @@
       .outline{position:fixed;border:3px solid #5089ff;background:#5089ff18;pointer-events:none}
       .shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none;outline:none}
       .hint,.notice{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:12px 18px;border-radius:8px;background:#101a2b;color:#fff;font:14px/1.5 system-ui;text-align:center;box-shadow:0 3px 15px #0005;pointer-events:auto}
-      .hint button{margin-left:12px}.marker{position:fixed;pointer-events:auto;background:#2357d9;box-shadow:0 2px 8px #0005}
+      .hint button{margin-left:12px}.marker{position:fixed;pointer-events:none;opacity:0;background:#2357d9;box-shadow:0 2px 8px #0005}
+      .marker.visible,.marker:focus-visible{opacity:1;pointer-events:auto}
       input[type=range]{width:75px}dialog{pointer-events:auto;max-width:90vw;width:560px;border:1px solid #526077;border-radius:12px;background:#101a2b;color:#fff;padding:20px;font:14px system-ui}dialog::backdrop{background:#0008}dialog input{width:100%;padding:10px;margin:12px 0;color:#fff;background:#263349;border:1px solid #526077}
     `;
     root.append(style);
@@ -279,6 +280,7 @@
     marker.hidden = rect.bottom < 0 || rect.top > innerHeight || !rect.width || !rect.height;
   }
   function removeMarker() {
+    markerEvents?.abort(); markerEvents = null;
     marker?.getRootNode().host?.remove(); marker = null; markerTarget = null;
   }
   function installMarker(value) {
@@ -289,8 +291,19 @@
     if (!element) return false;
     const {root} = makeUI();
     marker = document.createElement('button'); marker.className = 'marker'; marker.textContent = t('marker');
+    marker.setAttribute('aria-label', t('marker'));
     markerTarget = element; marker.onclick = () => openElement(element).catch(error => notify(error.message));
-    root.append(marker); positionMarker(); return true;
+    markerEvents = new AbortController();
+    const options = {signal: markerEvents.signal};
+    const update = () => marker?.classList.toggle('visible', markerTarget.matches(':hover') || marker.matches(':hover'));
+    element.addEventListener('mouseenter', () => marker?.classList.add('visible'), options);
+    element.addEventListener('mouseleave', event => {
+      if (event.relatedTarget !== root.host && !marker?.matches(':hover')) marker?.classList.remove('visible');
+    }, options);
+    marker.addEventListener('mouseenter', () => marker?.classList.add('visible'), options);
+    marker.addEventListener('mouseleave', update, options);
+    window.addEventListener('blur', () => marker?.classList.remove('visible'), options);
+    root.append(marker); positionMarker(); update(); return true;
   }
 
   window.addEventListener('resize', () => {renderCrop(); positionMarker();});

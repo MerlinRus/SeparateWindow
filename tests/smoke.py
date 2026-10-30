@@ -314,9 +314,21 @@ def main():
             command('restore')
             page.reload()
             page.wait_for_timeout(300)
-            # Revisit marker visible, without automatic detachment for ordinary URLs.
+            # Revisit marker appears only while hovering over its saved block.
             assert not state()['session']
             assert markers(cdp.send('DOM.getDocument', {'depth':-1,'pierce':True})['root']) == 1
+            marker_label = ru['marker']['message']
+            page.mouse.move(5, 5)
+            assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '0'
+            box = page.locator('#widget').bounding_box()
+            page.mouse.move(box['x'] + 20, box['y'] + 100)
+            assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '1'
+            rect = control(marker_label, 'function(){const r=this.getBoundingClientRect();return {x:r.x+10,y:r.y+10}}')
+            page.mouse.move(rect['x'], rect['y'])
+            assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '1', 'Moving onto the button must not hide it'
+            page.mouse.move(5, 5)
+            assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '0'
+            print('PASS: reopen button hidden outside its block, visible on block/button hover')
             command('forget')
             page.wait_for_timeout(150)
             assert f'selection:{url}' not in state()['local']
