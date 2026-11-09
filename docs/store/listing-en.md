@@ -21,6 +21,7 @@ Features:
 - Move the current tab into a popup without reloading the page.
 - Show only the selected element; temporarily hide surrounding page decoration.
 - Translucent controls appear over the content when you hover over their area.
+- The semi-transparent “Open in a separate window” button appears only when you hover over a saved element, keeping the page visible underneath.
 - Video-only mode hides player panels; “Show player” restores site controls without reloading. Also supports accessible HTML video inside nested frames.
 - “Always on top” opens video in Chrome picture-in-picture, including videos in nested players.
 - Return the live page to a regular tab with “Back to tab”.

@@ -27,6 +27,16 @@
 
 Подготовка пакета не означает отправку, публикацию или одобрение обновления Google. Карточка продукта: https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm . Текущая распакованная установка и магазинная версия могут иметь разные ID и отдельные локальные настройки.
 
+## Английская карточка
+
+В существующей карточке Separate Window откройте «Описание продукта» и в списке языка редактирования выберите English (en). Эта локаль уже включена в ZIP как `_locales/en/messages.json`; название и краткое описание берутся из пакета.
+
+В поле полного описания вставьте всё содержимое `listing-description-en.txt`. В локализованные скриншоты английского языка добавьте `assets/screenshot-01-select-en.png`, `assets/screenshot-02-window-en.png`, `assets/screenshot-03-app-en.png`. Сохраните изменения английской локали вместе с обновлением текущего продукта.
+
+Короткий текст обновления находится в `release-notes-ru.txt` и `release-notes-en.txt`. Английский текст можно добавить в конец полного английского описания под строкой “What's new in 1.3.2”.
+
+Официальная инструкция: https://developer.chrome.com/docs/webstore/cws-dashboard-listing#localize_your_listing
+
 ## Воспроизводимая сборка
 
 ```powershell

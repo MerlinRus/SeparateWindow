@@ -1,0 +1,1 @@
+The “Open in a separate window” button is now semi-transparent, keeping the image visible underneath. It appears only when you hover over a saved element.
