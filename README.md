@@ -107,4 +107,4 @@ python tests/pip.py
 
 Исходный знак — `icons/mark.svg`. PNG 16/32/48/128 для Chrome, 256/512 для презентаций и favicon.ico генерируются командой `python tools/build_icons.py`. Иконка 128×128 имеет номинальный прозрачный отступ 16 px.
 
-`python tools/store_assets.py` снимает настоящий интерфейс на собственной демо-странице и создаёт шесть скриншотов RU/EN, промо 440×280 и 1400×560. `python tools/verify_release.py` проверяет комплект и загрузку упакованной версии в Chromium. Для генерации материалов нужны Python, Pillow и Playwright; в runtime-ZIP они не входят.
+`python tools/marketing_assets.py` снимает реальную работу расширения на собственной демо-странице и создаёт галереи с крупными заголовками: RU, EN и глобальную, по три PNG 1280×800. Третий сюжет иллюстрирует размещение PiP рядом с заметками; сам режим проверяется в Chromium. `tools/store_assets.py` и `tools/global_assets.py` вызывают тот же генератор. Рекламные изображения 440×280 и 1400×560 хранятся отдельно в `docs/store/assets`. `python tools/verify_release.py` проверяет комплект и загрузку упакованной версии в Chromium. Для генерации нужны Python, Pillow и Playwright; в runtime-ZIP они не входят.
