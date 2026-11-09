@@ -15,6 +15,8 @@
 
 Комплект `dist/chrome-web-store-materials-1.4.0.zip` содержит изображения и тексты. **Его не нужно загружать как пакет расширения.**
 
+Для поля **«Глобальные скриншоты»** подготовлен отдельный архив `dist/global-screenshots-1.4.0.zip`. В нём три PNG RGB 1280×800: `global-01-select.png` (выбор блока), `global-02-video.png` (чистое видео), `global-03-languages.png` (реальный интерфейс на английском и русском). Первые два кадра сняты с работающего расширения на собственной демо-странице; третий показывает два настоящих снимка popup. Это общий набор для всех языков. Для локализованных полей остаются отдельные файлы с `-ru.png` и `-en.png`.
+
 ## В кабинете Chrome Web Store
 
 1. В аккаунте издателя Mycelium откройте существующую карточку Separate Window с ID `fhcafcdfknddjfgbbkhpglgamceiclcm`. ZIP Separate Window нельзя загружать обновлением Mycelium Autofill.
@@ -42,6 +44,7 @@
 ```powershell
 python tools/build_icons.py
 python tools/store_assets.py
+python tools/global_assets.py
 python tests/smoke.py
 python tools/package.py
 python tools/verify_release.py

@@ -30,6 +30,11 @@ for path in assets.glob('screenshot-*.png'):
     with Image.open(path) as image:
         assert image.size == (1280,800) and image.mode == 'RGB', path
 assert len(list(assets.glob('screenshot-*.png'))) == 6
+global_screenshots = sorted(assets.glob('global-*.png'))
+assert len(global_screenshots) == 3
+for path in global_screenshots:
+    with Image.open(path) as image:
+        assert image.size == (1280,800) and image.mode == 'RGB', path
 for size in ((440,280),(1400,560)):
     with Image.open(assets/f'promo-{size[0]}x{size[1]}.png') as image:
         assert image.size == size and image.mode == 'RGB'
