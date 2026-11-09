@@ -34,7 +34,7 @@
       .shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none;outline:none}
       .hint,.notice{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:12px 18px;border-radius:8px;background:#101a2b;color:#fff;font:14px/1.5 system-ui;text-align:center;box-shadow:0 3px 15px #0005;pointer-events:auto}
       .hint button{margin-left:12px}.marker{position:fixed;pointer-events:none;opacity:0;background:#2357d9;box-shadow:0 2px 8px #0005}
-      .marker.visible,.marker:focus-visible{opacity:1;pointer-events:auto}
+      .marker.visible,.marker:focus-visible{opacity:.5;pointer-events:auto}
       input[type=range]{width:75px}dialog{pointer-events:auto;max-width:90vw;width:560px;border:1px solid #526077;border-radius:12px;background:#101a2b;color:#fff;padding:20px;font:14px system-ui}dialog::backdrop{background:#0008}dialog input{width:100%;padding:10px;margin:12px 0;color:#fff;background:#263349;border:1px solid #526077}
     `;
     root.append(style);

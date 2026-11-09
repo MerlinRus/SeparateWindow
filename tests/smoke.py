@@ -322,10 +322,10 @@ def main():
             assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '0'
             box = page.locator('#widget').bounding_box()
             page.mouse.move(box['x'] + 20, box['y'] + 100)
-            assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '1'
+            assert 0 < float(control(marker_label, 'function(){return getComputedStyle(this).opacity}')) < 1
             rect = control(marker_label, 'function(){const r=this.getBoundingClientRect();return {x:r.x+10,y:r.y+10}}')
             page.mouse.move(rect['x'], rect['y'])
-            assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '1', 'Moving onto the button must not hide it'
+            assert 0 < float(control(marker_label, 'function(){return getComputedStyle(this).opacity}')) < 1, 'Moving onto the button must keep it visible and translucent'
             page.mouse.move(5, 5)
             assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '0'
             print('PASS: reopen button hidden outside its block, visible on block/button hover')

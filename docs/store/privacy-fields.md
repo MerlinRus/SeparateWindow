@@ -1,4 +1,4 @@
-# Privacy practices — Separate Window 1.3.1
+# Privacy practices — Separate Window 1.3.2
 
 Publisher: Mycelium. Contact: qobuz43@gmail.com.
 

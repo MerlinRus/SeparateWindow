@@ -1,4 +1,4 @@
-# Chrome Web Store listing — Separate Window 1.3.1
+# Chrome Web Store listing — Separate Window 1.3.2
 
 Publisher: **Mycelium**. Support: **qobuz43@gmail.com**.
 Category: Productivity. Default language: Russian. Additional locale: English.
