@@ -1,4 +1,4 @@
-# Chrome Web Store listing — Separate Window 1.3.2
+# Chrome Web Store listing — Separate Window 1.4.0
 
 Publisher: **Mycelium**. Support: **qobuz43@gmail.com**.
 Category: Productivity. Default language: Russian. Additional locale: English.
@@ -31,7 +31,7 @@ Features:
 - Save the visible part of an element as a PNG screenshot.
 - Create bookmarks in “Separate windows” and links that reopen the selected element.
 - Alt+Shift+S shortcut and a native context-menu command.
-- Russian and English interface.
+- Choose Russian, English or your browser language in the extension menu. The preference is saved and applies to existing windows without reloading video.
 
 The extension runs locally, with no registration, ads, analytics or data sent to the developer. Element selections and window geometry are stored in the browser. Chrome itself may sync created bookmarks when browser sync is enabled.
 

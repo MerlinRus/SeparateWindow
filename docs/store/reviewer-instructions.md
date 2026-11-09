@@ -1,4 +1,4 @@
-# Reviewer instructions — Separate Window 1.3.2
+# Reviewer instructions — Separate Window 1.4.0
 
 No account, credentials, payment, external application or server is required.
 The publisher is Mycelium; support: qobuz43@gmail.com.
@@ -12,7 +12,9 @@ The publisher is Mycelium; support: qobuz43@gmail.com.
 7. A cross-origin iframe is selected as a whole. Selection intercepts pointer events instead of toggling the player's play/pause controls.
 8. Start a video and use “Always on top” in the hover toolbar. Chrome displays that video in a separate picture-in-picture window without reloading the source player, including nested cross-origin frames. Press “Return video” or close PiP to return it. Site controls/subtitles may not appear, and some players prohibit PiP. Images and arbitrary widgets do not support this mode. No external component or additional permission is required.
 
-The store screenshots use an original canvas-generated demonstration video, captured from the real extension UI. They contain no third-party movie footage, personal data or service credentials. Russian and English are selected automatically from the browser UI language.
+9. Change Language in the extension menu to Русский, English or Automatic. Verify that the popup, existing picker/toolbar, tooltips, messages and context menu update without reloading the page, and the preference survives reopening the menu.
+
+The store screenshots use an original canvas-generated demonstration video, captured from the real extension UI. They contain no third-party movie footage, personal data or service credentials. Russian and English follow the browser language by default and can be selected manually in the extension menu.
 
 Source and reproducible automation: https://github.com/MerlinRus/SeparateWindow
 Run `python tests/smoke.py` for the isolated Chromium test. Run `python tools/store_assets.py` to reproduce the listing images. Build with `python tools/package.py`.

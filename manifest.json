@@ -1,18 +1,64 @@
 {
   "manifest_version": 3,
   "name": "Separate Window",
-  "version": "1.3.2",
+  "version": "1.4.0",
   "description": "__MSG_extensionDescription__",
   "default_locale": "ru",
   "author": "Mycelium",
   "homepage_url": "https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm",
   "minimum_chrome_version": "120",
-  "permissions": ["tabs", "scripting", "storage", "contextMenus", "bookmarks"],
-  "host_permissions": ["<all_urls>"],
-  "background": {"service_worker": "background.js"},
-  "action": {"default_popup": "popup.html", "default_title": "Separate Window", "default_icon": {"16":"icons/icon16.png","32":"icons/icon32.png","48":"icons/icon48.png","128":"icons/icon128.png"}},
-  "icons": {"16":"icons/icon16.png","32":"icons/icon32.png","48":"icons/icon48.png","128":"icons/icon128.png"},
-  "content_security_policy": {"extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"},
-  "commands": {"select": {"suggested_key": {"default": "Alt+Shift+S"}, "description": "__MSG_shortcutDescription__"}},
-  "content_scripts": [{"matches": ["http://*/*", "https://*/*", "file:///*"], "js": ["content.js"], "run_at": "document_idle"}]
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage",
+    "contextMenus",
+    "bookmarks"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Separate Window",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; base-uri 'none'"
+  },
+  "commands": {
+    "select": {
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
+      "description": "__MSG_shortcutDescription__"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*",
+        "file:///*"
+      ],
+      "js": [
+        "i18n.js",
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
 }

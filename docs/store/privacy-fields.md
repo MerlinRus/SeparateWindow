@@ -1,4 +1,4 @@
-# Privacy practices — Separate Window 1.3.2
+# Privacy practices — Separate Window 1.4.0
 
 Publisher: Mycelium. Contact: qobuz43@gmail.com.
 
@@ -14,7 +14,7 @@ Reads the current page URL/title and tab/window metadata needed to move the exis
 
 ### storage
 
-Stores per-page CSS selectors and optional window geometry locally. Uses session storage for the original tab position, tab/window IDs and current URL while detached. No storage.sync or extension server is used.
+Stores the interface language preference, per-page CSS selectors and optional window geometry locally. Uses session storage for the original tab position, tab/window IDs and current URL while detached. No storage.sync or extension server is used.
 
 ### scripting
 

@@ -1,7 +1,19 @@
 (() => {
-  const t = (key, substitutions) => chrome.i18n.getMessage(key, substitutions);
+  const t = (key, substitutions) => SWI18n.t(key, substitutions);
   if (globalThis.__separateWindowLocal) return;
   globalThis.__separateWindowLocal = true;
+  const roots = new Set();
+  SWI18n.onChange(old => {
+    for (const root of roots) {
+      if (!root.host.isConnected) {roots.delete(root); continue;}
+      root.host.lang = SWI18n.language;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      for (let node; (node = walker.nextNode());) node.textContent = SWI18n.translate(node.textContent, old);
+      for (const element of root.querySelectorAll('*')) for (const attr of ['title','aria-label','placeholder']) {
+        if (element.hasAttribute(attr)) element.setAttribute(attr, SWI18n.translate(element.getAttribute(attr), old));
+      }
+    }
+  });
   const token = `sw-${crypto.randomUUID().replaceAll('-', '')}`;
   const targetAttr = `data-${token}-target`;
   const ancestorAttr = `data-${token}-ancestor`;
@@ -20,6 +32,8 @@
     host.setAttribute(`data-${token}-ui`, '');
     host.style.cssText = 'all:initial!important;position:fixed!important;inset:0!important;z-index:2147483647!important;pointer-events:none!important;visibility:visible!important;display:block!important;';
     const root = host.attachShadow({mode: 'closed'});
+    for (const existing of roots) if (!existing.host.isConnected) roots.delete(existing);
+    host.lang = SWI18n.language; roots.add(root);
     const style = document.createElement('style');
     style.textContent = `
       :host{color-scheme:dark}*{box-sizing:border-box}button,input{font:13px system-ui,sans-serif}
@@ -317,7 +331,7 @@
     if (sender.id !== chrome.runtime.id) return;
     switch (message.type) {
       case 'select':
-        Promise.resolve(startPicker()).then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
+        SWI18n.ready.then(startPicker).then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
         return true;
       case 'uncrop': unCrop(false); break;
       case 'pip-state': setPinState(message.active); break;
@@ -363,5 +377,5 @@
   window.addEventListener('hashchange', () => {
     if (!selected && location.hash.startsWith('#__sw_local=')) init().catch(error => notify(error.message));
   });
-  init().catch(error => notify(error.message));
+  SWI18n.ready.then(init).catch(error => notify(error.message));
 })();

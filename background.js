@@ -1,5 +1,5 @@
-importScripts('media.js');
-const t = (key, substitutions) => chrome.i18n.getMessage(key, substitutions);
+importScripts('i18n.js', 'media.js');
+const t = (key, substitutions) => SWI18n.t(key, substitutions);
 const sessionKey = id => `window:${id}`;
 const selectionKey = url => `selection:${url}`;
 const supported = url => /^(https?|file):/.test(url || '');
@@ -9,7 +9,7 @@ async function tell(tabId, type) {
   catch {
     const tab = await chrome.tabs.get(tabId);
     if (!supported(tab.url)) throw new Error(t('restrictedPage'));
-    await chrome.scripting.executeScript({target: {tabId}, files: ['content.js']});
+    await chrome.scripting.executeScript({target: {tabId}, files: ['i18n.js', 'content.js']});
     return chrome.tabs.sendMessage(tabId, {type});
   }
 }
@@ -186,17 +186,21 @@ async function handle(message, sender) {
 }
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
-  handle(message, sender).then(result => respond({ok: true, ...result}), error => respond({ok: false, error: error.message}));
+  const task = message.type === 'translations' ? SWI18n.reload().then(() => ({language:SWI18n.language, preference:SWI18n.preference, messages:SWI18n.messages})) : SWI18n.ready.then(() => handle(message, sender));
+  task.then(result => respond({ok: true, ...result}), error => respond({ok: false, error: error.message}));
   return true;
 });
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
+  await SWI18n.ready;
   chrome.contextMenus.removeAll(() => chrome.contextMenus.create({id: 'select', title: t('contextMenu'), contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*', 'file:///*']}));
 });
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'select') tell(tab.id, 'select').catch(console.error);
 });
+SWI18n.onChange(() => chrome.contextMenus.update('select', {title:t('contextMenu')}).catch(() => {}));
 chrome.commands.onCommand.addListener(async command => {
   if (command !== 'select') return;
+  await SWI18n.ready;
   const [tab] = await chrome.tabs.query({active: true, lastFocusedWindow: true});
   if (tab) handle({type: 'select', tabId: tab.id}, {url: chrome.runtime.getURL('popup.html')}).catch(console.error);
 });

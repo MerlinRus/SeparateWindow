@@ -4,7 +4,7 @@
 
 ![Separate Window](icons/icon128.png)
 
-Материалы и инструкция публикации: [docs/store/README.md](docs/store/README.md). Сборка чистого ZIP для Chrome Web Store: `python tools/package.py`; результат — `dist/separate-window-1.3.2.zip`. Отдельный архив с изображениями и текстами — `dist/chrome-web-store-materials-1.3.2.zip`.
+Материалы и инструкция публикации: [docs/store/README.md](docs/store/README.md). Сборка чистого ZIP для Chrome Web Store: `python tools/package.py`; результат — `dist/separate-window-1.4.0.zip`. Отдельный архив с изображениями и текстами — `dist/chrome-web-store-materials-1.4.0.zip`.
 
 Издатель: **Mycelium**. Поддержка: **qobuz43@gmail.com**. [Политика конфиденциальности](https://merlinrus.github.io/SeparateWindow/privacy.html).
 
@@ -20,6 +20,8 @@
 В Edge установка аналогична, страница расширений — `edge://extensions`.
 
 ## Использование
+
+В меню расширения есть настройка **Язык / Language**: русский, English или автоматический выбор по языку браузера. Выбор сохраняется локально и применяется к меню, кнопкам на странице, открытым отдельным окнам, подсказкам, сообщениям и команде контекстного меню. Уже открытое видео не перезагружается. Системные подписи Chrome и язык страницы магазина определяются самим браузером.
 
 Нажмите значок расширения → **Выбрать блок на странице**. Наведите мышь на видео, виджет, игру, изображение, таблицу или другой блок.
 
