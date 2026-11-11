@@ -136,9 +136,10 @@ def render(context,lang):
         .selected,.result{{left:244px;top:288px;width:792px}}
         .selected{{left:160px;width:960px;border:0;background:transparent;border-radius:0;box-shadow:none}}
         .widget-result{{left:832px;top:288px;width:360px}}.cursor{{position:absolute;left:492px;top:548px;width:32px;height:40px}}
+        .launch-cursor{{position:absolute;width:40px;height:50px;pointer-events:none}}
         </style><header><img src="{brand}" alt="">Separate Window</header><div class="steps">{steps}</div><h1>{title}</h1><p class="sub">{subtitle}</p>'''
         if index==1:
-            scene=f'<div class="frame source"><img src="{source}"></div><div class="frame popup"><img src="{popup_header}"><img src="{popup_action}"></div>'
+            scene=f'''<div class="frame source"><img src="{source}"></div><div class="frame popup"><img src="{popup_header}"><img src="{popup_action}"></div><svg class="launch-cursor" viewBox="0 0 32 40" aria-hidden="true"><path d="M3 2v29l8-7 7 13 6-3-7-13h11Z" fill="#202731" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>'''
         elif index==2:
             scene=f'''<div class="frame selected"><img src="{selected}"></div><svg class="cursor" viewBox="0 0 32 40"><path d="M3 2v29l8-7 7 13 6-3-7-13h11Z" fill="#202731" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>'''
         elif index==3:
@@ -147,6 +148,12 @@ def render(context,lang):
             scene=f'<div class="frame source"><img src="{widget_source}"></div><div class="frame widget-result"><img src="{widget}"></div>'
         page.set_content('<!doctype html><meta charset="utf-8">'+common+scene)
         page.evaluate('Promise.all([...document.images].map(img=>img.decode()))')
+        if index==1:
+            button=page.locator('.popup img:last-child').bounding_box()
+            cursor={'x':button['x']+button['width']-48,'y':button['y']+button['height']*.55}
+            page.locator('.launch-cursor').evaluate('(element,point)=>{element.style.left=point.x+"px";element.style.top=point.y+"px"}',cursor)
+            assert button['x'] < cursor['x']+4 < button['x']+button['width']
+            assert button['y'] < cursor['y']+3 < button['y']+button['height']
         # No cropping or overlap in the instructional headings, including translated variants.
         assert page.locator('h1').evaluate('(e)=>e.getBoundingClientRect().right<=1216')
         assert page.locator('.sub').evaluate('(e)=>e.getBoundingClientRect().bottom<=264')
