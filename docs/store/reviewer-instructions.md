@@ -14,7 +14,7 @@ The publisher is Mycelium; support: qobuz43@gmail.com.
 
 9. Change Language in the extension menu to Русский, English or Automatic. Verify that the popup, existing picker/toolbar, tooltips, messages and context menu update without reloading the page, and the preference survives reopening the menu.
 
-The store gallery combines actual extension captures with large localized benefit headlines. It uses an original canvas-generated demonstration video. The third scene illustrates a PiP video next to demo notes; it is a composition, not a screenshot of a specific operating system. PiP itself is exercised in Chromium by the gallery generator. They contain no third-party movie footage, personal data or service credentials. Russian and English follow the browser language by default and can be selected manually in the extension menu.
+The store gallery follows a single real workflow: open the extension menu, select a player, watch the same video in a separate window. The first image combines actual menu header and button captures to focus on the action. The second shows the selection outline, and the third shows the actual clean video frame. The source is an original canvas-generated demo video. There are no invented workspaces, third-party movie footage, personal data or service credentials.
 
 Source and reproducible automation: https://github.com/MerlinRus/SeparateWindow
 Run `python tests/smoke.py` for the isolated Chromium test. Run `python tools/store_assets.py` to reproduce the listing images. Build with `python tools/package.py`.
