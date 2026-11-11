@@ -17,6 +17,7 @@ ART=ROOT/'tools/.artifacts/promo'
 VERSION=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))['version']
 sys.path.insert(0,str(ROOT/'tools/.deps'))
 import imageio_ffmpeg
+from promo_music import add_music
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -134,6 +135,9 @@ def main():
             # Full decode catches incomplete files and broken packets.
             subprocess.run([ffmpeg,'-v','error','-i',str(out),'-f','null','-'],check=True)
             print(f'PASS: {out.name}, {frames/fps:.2f}s, 1280x720, 30fps, H.264; full decode passed; {out.stat().st_size} bytes',flush=True)
+            music=add_music(out,frames/fps)
+            metadata.update({'file':music.name,'audio':True})
+            (ART/'metadata.json').write_text(json.dumps(metadata,indent=2),encoding='utf-8')
     finally:
         if encoder and encoder.poll() is None:encoder.kill()
         server.shutdown()

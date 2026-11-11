@@ -1,0 +1,9 @@
+Open a video, calculator or another part of a web page in a separate window with Separate Window.
+
+Choose what you need, leave the surrounding page behind and keep using the selected content.
+
+Install Separate Window:
+https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm
+
+By Mycelium
+Support: qobuz43@gmail.com

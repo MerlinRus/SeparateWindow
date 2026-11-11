@@ -1,0 +1,13 @@
+{
+  "title": "Separate Window promo score",
+  "source": "tools/promo_music.py",
+  "bpm": 100,
+  "sample_rate": 48000,
+  "duration": 24.47,
+  "external_samples": false,
+  "external_compositions": false,
+  "seed": 7112026,
+  "pcm_sha256": "358445e1c2222c5d82c7ce7be99a836799e1b9c3b635c3390acfee4ed49d059d",
+  "wav_sha256": "348174aa1e979a81faaf97ac567a3eb1b83ce6b3ff0ee1e90f308b0e7ef4dcdf",
+  "notes": "New instrumental score synthesized for this project. No third-party attribution required. No Content ID registration has been requested. YouTube matching has not been tested."
+}

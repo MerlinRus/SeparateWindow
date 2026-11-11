@@ -1,6 +1,6 @@
 # Глобальный проморолик
 
-Файл: `videos/global-promo-1.4.0.mp4` — 24,47 секунды, 1280×720, 30 кадров/с, H.264, без звука. Английские подписи. Копия для загрузки находится в `dist/separate-window-global-promo-1.4.0.mp4`.
+Файл: `videos/global-promo-1.4.0.mp4` — 24,47 секунды, 1280×720, 30 кадров/с, H.264, со спокойной инструментальной музыкой, AAC stereo 48 kHz. Английские подписи. Копия для загрузки находится в `dist/separate-window-global-promo-1.4.0-music.mp4`.
 
 ## Содержание
 
@@ -11,7 +11,13 @@
 - 0:14 — выбор калькулятора, изменение количества и расчёт нового результата
 - 0:22 — название и приглашение установить расширение
 
-Действия сняты в Chromium с работающим расширением. Видео и калькулятор остаются в прежнем документе после переноса; запись проверяет это по идентификатору страницы. В калькуляторе количество меняется с 4 на 2, результат — с 1000 на 500. Используются собственные демонстрационные страницы и анимированный пейзаж; чужих фильмов, музыки и рекламных материалов в ролике нет.
+Действия сняты в Chromium с работающим расширением. Видео и калькулятор остаются в прежнем документе после переноса; запись проверяет это по идентификатору страницы. В калькуляторе количество меняется с 4 на 2, результат — с 1000 на 500. Используются собственные демонстрационные страницы и анимированный пейзаж; чужих фильмов и рекламных материалов в ролике нет.
+
+## Музыка
+
+Новая инструментальная композиция создана для этого ролика в `tools/promo_music.py`: 100 BPM, синтезированные клавиши, бас, подклад и тихая перкуссия. Звуки получены из осцилляторов и воспроизводимого шума; сторонние записи, сэмплы, MIDI и готовые мелодии не загружаются. Громкость нормализована до целевого уровня −20 LUFS, в начале и конце есть плавное затухание. Указание стороннего автора не требуется.
+
+Происхождение и SHA-256 исходного WAV сохранены в `videos/music-provenance.json`. Генератор позволяет заново получить исходную дорожку. В Content ID композиция нами не регистрировалась. Отсутствие автоматического совпадения на YouTube не проверялось: перед публикацией дождитесь результата раздела «Проверки» в Studio.
 
 ## Размещение
 
@@ -19,14 +25,16 @@
 
 Название для YouTube:
 
-> Separate Window — video and widgets in their own windows
+> Separate Window — Open videos and widgets in a separate window
 
 Описание для YouTube:
 
-```text
-Select a video or another page element and open it in its own window with Separate Window.
+Готовые тексты для копирования: `youtube-title-en.txt` и `youtube-description-en.txt`.
 
-This demo shows selecting a player on a busy page, hiding the player interface and using a calculator after moving it to a separate window.
+```text
+Open a video, calculator or another part of a web page in a separate window with Separate Window.
+
+Choose what you need, leave the surrounding page behind and keep using the selected content.
 
 Install Separate Window:
 https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm
@@ -47,4 +55,4 @@ python tools/marketing_assets.py
 python tools/promo_video.py
 ```
 
-Монтаж задан в `tools/promo-story.html`. `tools/promo_video.py` записывает действия, компонует кадры и полностью декодирует готовый MP4 для проверки. Временные записи и контрольные кадры сохраняются в игнорируемой папке `tools/.artifacts/promo`. Для повторного монтажа без пересъёмки используйте `python tools/promo_video.py --reuse-recordings`.
+Монтаж задан в `tools/promo-story.html`. `tools/promo_video.py` записывает действия, компонует кадры, добавляет музыку и полностью декодирует готовый MP4 для проверки. Временные записи и контрольные кадры сохраняются в игнорируемой папке `tools/.artifacts/promo`. Для повторного монтажа без пересъёмки используйте `python tools/promo_video.py --reuse-recordings`. Чтобы добавить музыку к уже собранной немой версии без пересборки видео: `python tools/promo_music.py`.

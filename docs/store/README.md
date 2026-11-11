@@ -12,7 +12,7 @@
 5. **Тексты карточки:** `listing-ru.md` и `listing-en.md`.
 6. **Privacy practices:** `privacy-fields.md`; инструкции проверки — `reviewer-instructions.md`.
 7. **Privacy policy URL:** https://merlinrus.github.io/SeparateWindow/privacy.html
-8. **Глобальный проморолик:** `videos/global-promo-1.4.0.mp4` — 24,47 секунды, английские подписи, без звука. Загрузите на YouTube и вставьте ссылку в поле «Глобальный проморолик». Текст для загрузки и исходники описаны в [promo-video.md](promo-video.md).
+8. **Глобальный проморолик:** `videos/global-promo-1.4.0.mp4` — 24,47 секунды, английские подписи, оригинальная фоновая музыка. Загрузите на YouTube и вставьте ссылку в поле «Глобальный проморолик». Текст для загрузки и исходники описаны в [promo-video.md](promo-video.md).
 
 Комплект `dist/chrome-web-store-materials-1.4.0.zip` содержит изображения, проморолик и тексты. **Его не нужно загружать как пакет расширения.**
 
