@@ -21,11 +21,13 @@ COPY={
  'en':[
   ('Open Separate Window','Click “Select a page element”'),
   ('Select a page element','Point to the player and click to open it in a separate window'),
-  ('Watch in a separate window','Use “Show player” whenever you need the original controls')],
+  ('Watch in a separate window','Leave the surrounding banners and player panels behind'),
+  ('More than video','Open calculators, tables, calendars and other page elements')],
  'ru':[
   ('Открой Separate Window','Нажми «Выбрать блок на странице»'),
   ('Выбери блок на странице','Наведись на плеер и нажми, чтобы вынести его в отдельное окно'),
-  ('Смотри в отдельном окне','Кнопка «Показать плеер» вернёт настройки, когда они понадобятся')]
+  ('Смотри в отдельном окне','Баннеры и панели плеера остаются на странице'),
+  ('Не только видео','Выноси калькуляторы, таблицы, календари и другие блоки страницы')]
 }
 
 
@@ -39,6 +41,7 @@ def uri(path): return 'data:image/png;base64,'+base64.b64encode(path.read_bytes(
 def capture(context,worker,port,lang):
     worker.evaluate('lang=>chrome.storage.local.set({language:lang})',lang)
     page=context.new_page()
+    page.set_viewport_size({'width':1280,'height':640})
     page.goto(f'http://127.0.0.1:{port}/marketing-demo.html?lang={lang}')
     page.wait_for_function('document.querySelector("video").currentTime>0')
     popup=context.new_page();popup.set_viewport_size({'width':376,'height':650})
@@ -87,15 +90,38 @@ def capture(context,worker,port,lang):
     page.close()
 
 
+def capture_widget(context,worker,port,lang):
+    page=context.new_page();page.set_viewport_size({'width':1280,'height':640})
+    url=f'http://127.0.0.1:{port}/calculator-demo.html?lang={lang}'
+    page.goto(url)
+    identity=page.evaluate('window.identity')
+    page.screenshot(path=str(ART/f'widget-source-{lang}.png'))
+    worker.evaluate("""async url=>{const [tab]=await chrome.tabs.query({url});await tell(tab.id,'select');}""",url)
+    box=page.locator('#calculator').bounding_box()
+    page.mouse.move(box['x']+12,box['y']+12);page.mouse.click(box['x']+12,box['y']+12)
+    page.wait_for_function('document.querySelector("#calculator").getAttributeNames().some(name=>name.endsWith("-target"))')
+    assert page.evaluate('window.identity')==identity
+    assert page.locator('aside').is_hidden()
+    page.locator('#quantity').fill('2');page.locator('#calculate').click()
+    assert page.locator('#total').inner_text()=='500'
+    page.locator('#quantity').fill('4');page.locator('#calculate').click()
+    assert page.locator('#total').inner_text()=='1000'
+    page.mouse.move(10,10)
+    page.locator('#calculator').screenshot(path=str(ART/f'widget-{lang}.png'))
+    page.close()
+
+
 def render(context,lang):
     page=context.new_page();page.set_viewport_size({'width':1280,'height':800})
     brand=uri(ROOT/'icons/icon128.png')
     source=uri(ART/f'overview-{lang}.png')
-    selected=uri(ART/f'selected-{lang}.png')
+    selected=uri(ART/f'source-{lang}.png')
+    widget_source=uri(ART/f'widget-source-{lang}.png')
+    widget=uri(ART/f'widget-{lang}.png')
     clean=uri(ART/f'clean-{lang}.png')
     popup_header=uri(ART/f'popup-header-{lang}.png')
     popup_action=uri(ART/f'popup-action-{lang}.png')
-    labels=['Открой','Выбери','Смотри'] if lang=='ru' else ['Open','Select','Watch']
+    labels=['Открой','Выбери','Смотри','Другие блоки'] if lang=='ru' else ['Open','Select','Watch','Other content']
     for index,(title,subtitle) in enumerate(COPY[lang],1):
         steps=''.join(f'<span class="step {"active" if i==index else ""}"><b>{i}</b>{label}</span>' for i,label in enumerate(labels,1))
         common=f'''<style>
@@ -108,21 +134,23 @@ def render(context,lang):
         .source{{left:64px;top:288px;width:752px;opacity:.64}}
         .popup{{left:736px;top:416px;width:480px;padding:24px}}.popup img+img{{margin-top:24px}}
         .selected,.result{{left:244px;top:288px;width:792px}}
-        .selected{{border:0;background:transparent;border-radius:0;box-shadow:none}}
-        .cursor{{position:absolute;left:656px;top:500px;width:32px;height:40px}}
+        .selected{{left:160px;width:960px;border:0;background:transparent;border-radius:0;box-shadow:none}}
+        .widget-result{{left:832px;top:288px;width:360px}}.cursor{{position:absolute;left:492px;top:548px;width:32px;height:40px}}
         </style><header><img src="{brand}" alt="">Separate Window</header><div class="steps">{steps}</div><h1>{title}</h1><p class="sub">{subtitle}</p>'''
         if index==1:
             scene=f'<div class="frame source"><img src="{source}"></div><div class="frame popup"><img src="{popup_header}"><img src="{popup_action}"></div>'
         elif index==2:
             scene=f'''<div class="frame selected"><img src="{selected}"></div><svg class="cursor" viewBox="0 0 32 40"><path d="M3 2v29l8-7 7 13 6-3-7-13h11Z" fill="#202731" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>'''
-        else:
+        elif index==3:
             scene=f'<div class="frame result"><img src="{clean}"></div>'
+        else:
+            scene=f'<div class="frame source"><img src="{widget_source}"></div><div class="frame widget-result"><img src="{widget}"></div>'
         page.set_content('<!doctype html><meta charset="utf-8">'+common+scene)
         page.evaluate('Promise.all([...document.images].map(img=>img.decode()))')
         # No cropping or overlap in the instructional headings, including translated variants.
         assert page.locator('h1').evaluate('(e)=>e.getBoundingClientRect().right<=1216')
         assert page.locator('.sub').evaluate('(e)=>e.getBoundingClientRect().bottom<=264')
-        output=OUT/f'screenshot-0{index}-{["select","window","app"][index-1]}-{lang}.png'
+        output=OUT/f'screenshot-0{index}-{["select","window","app","widget"][index-1]}-{lang}.png'
         page.screenshot(path=str(output))
         with Image.open(output) as image:image.convert('RGB').save(output)
     page.close()
@@ -139,24 +167,25 @@ def main():
                 worker=context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
                 for lang in ('en','ru'):
                     capture(context,worker,server.server_port,lang)
+                    capture_widget(context,worker,server.server_port,lang)
                     render(context,lang)
                     print(f'Captured and rendered {lang} step-by-step gallery',flush=True)
             finally:context.close()
-        names=['global-01-select.png','global-02-video.png','global-03-window.png']
+        names=['global-01-select.png','global-02-video.png','global-03-window.png','global-04-widget.png']
         for index,name in enumerate(names,1):
-            shutil.copy2(OUT/f'screenshot-0{index}-{["select","window","app"][index-1]}-en.png',OUT/name)
+            shutil.copy2(OUT/f'screenshot-0{index}-{["select","window","app","widget"][index-1]}-en.png',OUT/name)
         for name in ['global-03-languages.png','global-03-work.png']:
             stale=OUT/name
             if stale.exists():stale.unlink()
         for path in list(OUT.glob('screenshot-*.png'))+list(OUT.glob('global-*.png')):
             with Image.open(path) as image:assert image.size==(1280,800) and image.mode=='RGB',path
         version=json.loads((ROOT/'manifest.json').read_text(encoding='utf-8'))['version']
-        for kind,files in [('global',names),('localized-ru',[f'screenshot-0{i}-{k}-ru.png' for i,k in [(1,'select'),(2,'window'),(3,'app')]]),('localized-en',[f'screenshot-0{i}-{k}-en.png' for i,k in [(1,'select'),(2,'window'),(3,'app')]])]:
+        for kind,files in [('global',names),('localized-ru',[f'screenshot-0{i}-{k}-ru.png' for i,k in [(1,'select'),(2,'window'),(3,'app'),(4,'widget')]]),('localized-en',[f'screenshot-0{i}-{k}-en.png' for i,k in [(1,'select'),(2,'window'),(3,'app'),(4,'widget')]])]:
             archive_path=ROOT/f'dist/{kind}-screenshots-{version}.zip'
             archive_path.parent.mkdir(exist_ok=True)
             with zipfile.ZipFile(archive_path,'w',zipfile.ZIP_DEFLATED) as archive:
                 for name in files:archive.write(OUT/name,name)
-        print('Verified 9 RGB PNG screenshots, 1280x800, and 3 upload ZIPs')
+        print('Verified 12 RGB PNG screenshots, 1280x800, and 3 upload ZIPs')
     finally:server.shutdown()
 
 

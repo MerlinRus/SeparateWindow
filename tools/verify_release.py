@@ -29,9 +29,9 @@ assets = ROOT / 'docs/store/assets'
 for path in assets.glob('screenshot-*.png'):
     with Image.open(path) as image:
         assert image.size == (1280,800) and image.mode == 'RGB', path
-assert len(list(assets.glob('screenshot-*.png'))) == 6
+assert len(list(assets.glob('screenshot-*.png'))) == 8
 global_screenshots = sorted(assets.glob('global-*.png'))
-assert len(global_screenshots) == 3
+assert len(global_screenshots) == 4
 for path in global_screenshots:
     with Image.open(path) as image:
         assert image.size == (1280,800) and image.mode == 'RGB', path

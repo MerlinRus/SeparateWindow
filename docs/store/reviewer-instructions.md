@@ -14,7 +14,7 @@ The publisher is Mycelium; support: qobuz43@gmail.com.
 
 9. Change Language in the extension menu to Русский, English or Automatic. Verify that the popup, existing picker/toolbar, tooltips, messages and context menu update without reloading the page, and the preference survives reopening the menu.
 
-The store gallery follows a single real workflow: open the extension menu, select a player, watch the same video in a separate window. The first image combines actual menu header and button captures to focus on the action. The second shows the selection outline, and the third shows the actual clean video frame. The source is an original canvas-generated demo video. There are no invented workspaces, third-party movie footage, personal data or service credentials.
+The store gallery follows a single real workflow: open the extension menu, select a player, watch the same video in a separate window. The first image combines actual menu header and button captures to focus on the action. The second shows the selection outline, and the third shows the actual clean video frame. The source page surrounds an original canvas-generated demo video with sample advertising banners, recommendations and a subscription panel. A fourth screenshot demonstrates the same extension isolating an interactive calculator; its input fields and calculate button are exercised after detaching it. There are no invented workspaces, third-party movie footage, personal data or service credentials.
 
 Source and reproducible automation: https://github.com/MerlinRus/SeparateWindow
 Run `python tests/smoke.py` for the isolated Chromium test. Run `python tools/store_assets.py` to reproduce the listing images. Build with `python tools/package.py`.
