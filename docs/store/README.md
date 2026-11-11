@@ -12,8 +12,9 @@
 5. **Тексты карточки:** `listing-ru.md` и `listing-en.md`.
 6. **Privacy practices:** `privacy-fields.md`; инструкции проверки — `reviewer-instructions.md`.
 7. **Privacy policy URL:** https://merlinrus.github.io/SeparateWindow/privacy.html
+8. **Глобальный проморолик:** `videos/global-promo-1.4.0.mp4` — 24,47 секунды, английские подписи, без звука. Загрузите на YouTube и вставьте ссылку в поле «Глобальный проморолик». Текст для загрузки и исходники описаны в [promo-video.md](promo-video.md).
 
-Комплект `dist/chrome-web-store-materials-1.4.0.zip` содержит изображения и тексты. **Его не нужно загружать как пакет расширения.**
+Комплект `dist/chrome-web-store-materials-1.4.0.zip` содержит изображения, проморолик и тексты. **Его не нужно загружать как пакет расширения.**
 
 Для поля **«Глобальные скриншоты»** подготовлен архив `dist/global-screenshots-1.4.0.zip`: `global-01-select.png`, `global-02-video.png`, `global-03-window.png`, `global-04-widget.png`. Это общий набор на английском с той же последовательностью действий. Отдельные архивы `dist/localized-ru-screenshots-1.4.0.zip` и `dist/localized-en-screenshots-1.4.0.zip` содержат по четыре изображения для соответствующих локализованных полей. Все файлы — RGB PNG 1280×800 без прозрачности. Не смешивайте старые и новые версии наборов.
 

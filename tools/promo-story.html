@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Separate Window — promo</title>
+<style>
+*{box-sizing:border-box}body{margin:0;width:1280px;height:720px;overflow:hidden;background:#f5f6f8;color:#202731;font-family:"Segoe UI",sans-serif}
+header{position:absolute;left:64px;top:24px;display:flex;align-items:center;gap:12px;font-size:20px;font-weight:650}header img{width:40px;height:40px}
+h1{position:absolute;top:90px;left:64px;font-size:40px;font-weight:500;letter-spacing:-.8px;margin:0;line-height:1.2}
+.scene{position:absolute;inset:0;opacity:0}.stage{position:absolute;left:112px;top:174px;width:1056px;height:528px;overflow:hidden;border:1px solid #dce0e5;border-radius:12px;background:#000;box-shadow:0 8px 24px #0000000f}.stage img{width:100%;height:100%;object-fit:contain;display:block}
+.overview{position:absolute;left:64px;top:174px;width:752px;opacity:.64;border:1px solid #dce0e5;border-radius:12px}
+.menu{position:absolute;left:736px;top:300px;width:480px;padding:24px;background:white;border:1px solid #dce0e5;border-radius:12px;box-shadow:0 8px 24px #0000000f}.menu img{display:block;width:100%}.menu img+img{margin-top:24px}
+.pointer{position:absolute;left:0;top:0;width:40px;height:50px;pointer-events:none;z-index:3}
+.brand-card{position:absolute;left:0;right:0;top:240px;text-align:center}.brand-card .name{display:flex;justify-content:center;align-items:center;gap:20px;font-size:56px;font-weight:600}.brand-card img{width:88px;height:88px}.brand-card p{margin:28px 0 0;font-size:24px;line-height:1.4;color:#596372}
+</style>
+<header><img class="brand" alt="">Separate Window</header>
+<div class="scene" id="intro"><div class="brand-card"><div class="name"><img class="brand" alt="">Separate Window</div><p>Video, widgets and other page elements<br>in their own windows</p></div></div>
+<div class="scene" id="menu"><h1>Open Separate Window</h1><img class="overview" id="overview" alt=""><div class="menu"><img id="menuHeader" alt=""><img id="menuButton" alt=""></div></div>
+<div class="scene" id="video"><h1 id="videoTitle">Select the player</h1><div class="stage"><img id="videoClip" src="frames/video-0001.png" alt=""></div></div>
+<div class="scene" id="calculator"><h1>Not just video — the controls still work</h1><div class="stage"><img id="calculatorClip" src="frames/calculator-0001.png" alt=""></div></div>
+<div class="scene" id="outro"><div class="brand-card"><div class="name"><img class="brand" alt="">Separate Window</div><p>Get it in the Chrome Web Store</p></div></div>
+<svg class="pointer" id="pointer" viewBox="0 0 32 40"><path d="M3 2v29l8-7 7 13 6-3-7-13h11Z" fill="#202731" stroke="white" stroke-width="2" stroke-linejoin="round"/></svg>
+<script>
+const data=__PROMO_DATA__;
+for(const node of document.querySelectorAll('.brand'))node.src=data.brand;
+for(const id of ['overview','menuHeader','menuButton'])document.getElementById(id).src=data[id];
+const segments=[['intro',2.4],['menu',4.5],['video',data.video.duration],['calculator',data.calculator.duration],['outro',2.8]];
+window.duration=segments.reduce((sum,s)=>sum+s[1],0);
+const pointer=document.querySelector('#pointer');
+const clamp=t=>Math.max(0,Math.min(1,t));
+// The established strong ease-in-out: cubic-bezier(.77,0,.175,1).
+function ease(x){let lo=0,hi=1;for(let i=0;i<18;i++){const t=(lo+hi)/2;const v=3*(1-t)*(1-t)*t*.77+3*(1-t)*t*t*.175+t*t*t;if(v<x)lo=t;else hi=t;}const t=(lo+hi)/2;return 3*(1-t)*t*t+t*t*t;}
+function move(a,b,t){const p=ease(clamp(t));pointer.style.transform=`translate3d(${a[0]+(b[0]-a[0])*p}px,${a[1]+(b[1]-a[1])*p}px,0)`;}
+async function media(clip,time){
+ // Decode recorded frames directly: paused browser video seeking can expose
+ // the preceding compositor frame to screenshots even after seeked fires.
+ const kind=clip.id.replace('Clip','');
+ const frame=String(Math.floor(time*30)+1).padStart(4,'0');
+ clip.src=`frames/${kind}-${frame}.png`;
+ await clip.decode();
+}
+
+window.seek=async time=>{
+ let start=0,id='outro',local=0,length=2.8;
+ for(const [name,seconds] of segments){if(time<start+seconds){id=name;local=time-start;length=seconds;break;}start+=seconds;}
+ for(const node of document.querySelectorAll('.scene'))node.style.opacity=node.id===id?Math.min(clamp(local/.2),clamp((length-local)/.2)):0;
+ document.querySelector('header').style.opacity=['intro','outro'].includes(id)?0:1;
+ pointer.style.opacity=0;
+ if(id==='menu'){
+   const b=document.querySelector('#menuButton').getBoundingClientRect();
+   move([480,630],[b.right-46,b.y+b.height*.55],(local-.6)/1.3);
+   pointer.style.opacity=clamp((local-.3)/.2)*clamp((length-local)/.2);
+   document.querySelector('.menu').style.transform=`scale(${local>3.7&&local<3.84?.99:1})`;
+ }
+ if(id==='video'||id==='calculator'){
+   const mark=data[id],clip=document.querySelector('#'+id+'Clip');
+   await media(clip,mark.offset+Math.min(local,mark.duration-.06));
+   if(id==='video')document.querySelector('#videoTitle').textContent=local>mark.click+.25?'Only your video':'Select the player';
+   if(local>mark.select-.15&&local<mark.click+.2){
+     const target=[112+mark.point[0]*.825,174+mark.point[1]*.825];
+     move([300,670],target,(local-mark.select)/.8);pointer.style.opacity=1;
+   }
+ }
+};
+Promise.all([...document.images].map(img=>img.decode())).then(()=>{window.ready=true;});
+</script></html>
