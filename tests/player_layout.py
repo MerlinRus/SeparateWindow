@@ -21,6 +21,8 @@ TWITCH_LAYOUT = '''<!doctype html><html class="site"><meta charset="utf-8">
   .video-player__container { overflow: hidden; }
   #hud { position: absolute; inset: auto 0 0; background: white; }
   #seek { height: 24px; background: lightgrey; }
+  .tw-dialog-layer { position: relative; z-index: 2; }
+  .tw-dialog-layer [role="menu"] { position: fixed; right: 24px; bottom: 64px; padding: 12px; background: white; }
 </style>
 <header>Navigation outside the selection</header>
 <main><div class="persistent-player">
@@ -30,10 +32,11 @@ TWITCH_LAYOUT = '''<!doctype html><html class="site"><meta charset="utf-8">
       <div data-a-target="video-ref"><video autoplay muted></video></div>
     </div>
     <div id="hud"><div id="seek" role="slider" aria-label="Seek"></div>
-      <button id="quality">Quality</button><button id="fullscreen">Fullscreen</button>
+      <button id="settings">Settings</button><button id="fullscreen">Fullscreen</button>
     </div>
   </div>
 </div></main>
+<div class="tw-dialog-layer" id="unrelated">Unrelated page dialog</div>
 <script>
   const player = document.querySelector('.video-player');
   const video = document.querySelector('video');
@@ -49,7 +52,17 @@ TWITCH_LAYOUT = '''<!doctype html><html class="site"><meta charset="utf-8">
   video.srcObject = canvas.captureStream(20);
   window.originalVideo = video;
   video.onclick = () => video.paused ? video.play() : video.pause();
-  document.querySelector('#quality').onclick = () => { player.dataset.quality = '1080p'; };
+  document.querySelector('#settings').onclick = () => {
+    const layer = document.createElement('div');
+    layer.className = 'tw-dialog-layer';
+    layer.innerHTML = '<div role="menu"><div data-a-target="player-settings-menu"><button id="quality">Quality</button></div></div>';
+    document.body.append(layer);
+    const menu = layer.querySelector('[data-a-target="player-settings-menu"]');
+    menu.querySelector('#quality').onclick = () => {
+      menu.innerHTML = '<button data-a-target="player-settings-submenu-quality-option">1080p</button>';
+      menu.firstChild.onclick = () => { player.dataset.quality = '1080p'; layer.remove(); };
+    };
+  };
   document.querySelector('#fullscreen').onclick = () => player.requestFullscreen();
   const seek = document.querySelector('#seek');
   for (const [event, key] of [['pointermove', 'hover'], ['click', 'seek']]) {
@@ -150,8 +163,14 @@ def main():
 
                     page.locator('video').click(position={'x': 100, 'y': 100})
                     assert page.evaluate('originalVideo.paused && !document.fullscreenElement')
-                    page.locator('#quality').click()
+                    assert not page.locator('#unrelated').is_visible()
+                    page.locator('#settings').click()
+                    menu = page.locator('[data-a-target="player-settings-menu"]')
+                    menu.wait_for(state='visible', timeout=1500)
+                    menu.get_by_role('button', name='Quality').click()
+                    menu.get_by_role('button', name='1080p').click()
                     assert player.get_attribute('data-quality') == '1080p'
+                    assert not menu.count() and not page.locator('#unrelated').is_visible()
                     page.locator('#fullscreen').click()
                     page.wait_for_function('document.fullscreenElement === document.querySelector(".video-player")')
                     page.evaluate('document.exitFullscreen()')
@@ -163,9 +182,10 @@ def main():
                     assert page.evaluate('selector => document.querySelector(selector)?.matches(".video-player")', saved), saved
                     worker.evaluate('''async url => {const [tab] = await chrome.tabs.query({url}); await restore(tab.id)}''', url)
                     assert page.locator('header').is_visible()
+                    assert page.locator('#unrelated').is_visible()
                     assert page.evaluate('originalVideo === document.querySelector("video")')
                     assert page.evaluate('getComputedStyle(document.documentElement).overflow') == 'scroll'
-                    print('PASS: Twitch fit, clean viewport, controls, fullscreen, stable saved selection and live restore')
+                    print('PASS: Twitch layout, controls, settings portal, quality selection, fullscreen and live restore')
                     test_embedded_player(page, worker, url.replace('/twitch-layout', '/embedded'))
                 finally:
                     context.close()

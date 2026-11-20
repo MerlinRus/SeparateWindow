@@ -1,1 +1,1 @@
-Fixed resizing for Twitch, RUTUBE, Vimeo, and embedded players. Removed outer scrollbars in detached windows. Improved saved player selections and fixed closing the link dialog with Escape.
+Fixed the Twitch settings menu in detached windows, including video quality selection.
