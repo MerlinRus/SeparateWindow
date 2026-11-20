@@ -164,6 +164,7 @@ async function toggleVideoPin(tabId, selector) {
   });
   const candidate = frames.filter(frame => frame.result).sort((a, b) =>
     Number(b.result.active) - Number(a.result.active) ||
+    Number(b.result.ready) - Number(a.result.ready) ||
     Number(b.result.playing) - Number(a.result.playing) || b.result.area - a.result.area
   )[0];
   if (!candidate) return {found: false};

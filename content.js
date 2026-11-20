@@ -28,11 +28,13 @@
   let marker, markerTarget, markerEvents, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false, cleanVideo = false;
   let blockPreview;
   let playerControls;
+  let toolbarEvents;
   const youtubePlayerSelector = '#movie_player.html5-video-player';
   const twitchPlayerSelector = '[data-a-target="video-player"],[data-test-selector="video-player__video-layout"]';
   const twitchSettingsLayer = '.tw-dialog-layer:has([data-a-target="player-settings-menu"])';
   const rutubePage = location.hostname === 'rutube.ru' || location.hostname.endsWith('.rutube.ru');
   const rutubePlayerSelector = 'section.video-player';
+  const rutubeSettingsLayer = '[data-floating-ui-portal]:has(#raichuSettingsPanel)';
   const layoutPlayers = [youtubePlayerSelector, twitchPlayerSelector];
   if (location.hostname === 'player.vimeo.com') layoutPlayers.push('#player');
   if (rutubePage) {
@@ -231,9 +233,10 @@
     const factor = fit ? Math.min(availableW / fitW, availableH / fitH) * scale : scale;
     const youtube = selected.matches(youtubePlayerSelector);
     const twitch = selected.matches(twitchPlayerSelector);
-    // Twitch mounts its settings outside the player in a separate dialog layer.
-    const showTwitchSettings = twitch && !cleanVideo;
-    const resizePlayer = initialSize.media || selected.matches(layoutPlayerSelector);
+    const knownPlayer = selected.matches(layoutPlayerSelector);
+    const resizePlayer = initialSize.media || knownPlayer;
+    // Keep native settings that these players render in a sibling portal.
+    const settingsLayer = !cleanVideo && (twitch ? twitchSettingsLayer : rutubePage && knownPlayer && rutubeSettingsLayer);
     // Resizing in layout keeps embedded viewports and player controls in sync
     // with the visible size. Generic blocks keep their original layout.
     const fitted = value => fit ? `min(${100 * scale * value / fitW}vw, ${100 * scale * value / fitH}vh)` : `${value * scale}px`;
@@ -253,7 +256,7 @@
       ${ancestor}{display:contents!important;position:static!important;margin:0!important;padding:0!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;transform:none!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:none!important;backdrop-filter:none!important;perspective:none!important;contain:none!important;container-type:normal!important;content-visibility:visible!important;clip:auto!important;clip-path:none!important;overflow:visible!important;opacity:1!important;isolation:auto!important;mix-blend-mode:normal!important;will-change:auto!important}
       ${ancestor}::before,${ancestor}::after{content:none!important;display:none!important}
       html${ancestor}{display:block!important;background:#000!important}
-      ${ancestor} > :not(${ancestor}):not(${target}):not(${controls}):not(${host}):not(style):not(script):not(link)${showTwitchSettings ? `:not(${twitchSettingsLayer})` : ''}{display:none!important}
+      ${ancestor} > :not(${ancestor}):not(${target}):not(${controls}):not(${host}):not(style):not(script):not(link)${settingsLayer ? `:not(${settingsLayer})` : ''}{display:none!important}
       ${target},${controls}{position:fixed!important;inset:auto!important;width:${width}!important;height:${height}!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;${placement}transform-origin:center!important;box-sizing:border-box!important;}
       ${target}{display:${initialSize.display}!important;z-index:2147483640!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:brightness(${brightness})!important;visibility:visible!important;}
       ${target}:fullscreen{inset:0!important;width:100%!important;height:100%!important;transform:none!important}
@@ -273,7 +276,7 @@
         ${target} :is(.video-player__container,[data-test-selector="video-player__video-container"],[data-a-target="video-ref"],[data-a-target="video-ref"] > video){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important}
         ${target} [data-a-target="video-ref"] > video{object-fit:contain!important}
       ` : ''}
-      ${showTwitchSettings ? `${ancestor} > ${twitchSettingsLayer}{position:relative!important;z-index:2147483642!important}` : ''}
+      ${settingsLayer ? `${ancestor} > ${settingsLayer}{position:relative!important;z-index:2147483642!important}` : ''}
     `;
   }
 
@@ -281,6 +284,8 @@
     stopPicker();
     stopPendingSelection();
     closeBlockPreview();
+    toolbarEvents?.abort();
+    toolbarEvents = null;
     cropObserver?.disconnect(); cropObserver = null;
     clearTimeout(recoveryTimer); recoveryTimer = null;
     cropStyle?.remove(); cropStyle = null;
@@ -431,8 +436,12 @@
 
   function toolbar() {
     ({host: ui, root: shadow} = makeUI());
+    toolbarEvents = new AbortController();
     const bar = document.createElement('div'); bar.className = 'bar'; bar.setAttribute('aria-label', t('controls'));
-    bar.addEventListener('pointerleave', () => shadow?.activeElement?.blur());
+    bar.addEventListener('pointerleave', () => {
+      const focused = shadow?.activeElement;
+      if (focused && bar.contains(focused)) focused.blur();
+    });
     bar.addEventListener('keydown', event => {
       if (event.key === 'Escape') {shadow.activeElement?.blur(); event.stopPropagation();}
     });
@@ -456,7 +465,10 @@
       if (blockPreview?.track) {await showBlockPreview(blockPreview); return;}
       const result = await send('video-pin', {selector: `[${targetAttr}]`});
       if (result.found) setPinState(result.active);
-      else if (selected && detached) await startBlockPreview();
+      else if (selected && detached) {
+        if (selected.matches(playerSelector)) throw new Error(t('pipNoVideo'));
+        await startBlockPreview();
+      }
     });
     setPinState(pipActive);
     button(t('size'), t('sizeTitle'), async button => {
@@ -470,6 +482,20 @@
     const label = document.createElement('span'); label.textContent = t('brightness');
     const range = document.createElement('input'); range.type = 'range'; range.min = '.2'; range.max = '2.5'; range.step = '.1'; range.value = '1'; range.setAttribute('aria-label', t('brightness'));
     range.oninput = () => {brightness = Number(range.value); renderCrop();}; bar.append(label, range);
+    const sliderKeys = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
+    // Keep page shortcuts away from focused extension controls and the modal.
+    window.addEventListener('keydown', event => {
+      const dialog = shadow.querySelector('dialog[open]');
+      if (dialog) {
+        event.stopImmediatePropagation();
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          dialog.close();
+        }
+      } else if (shadow.activeElement === range && sliderKeys.has(event.key)) {
+        event.stopImmediatePropagation();
+      }
+    }, {capture: true, signal: toolbarEvents.signal});
     button(t('snapshot'), t('snapshotTitle'), screenshot);
     button('★', t('bookmarkTitle'), async () => {await send('bookmark', {url: windowLink()}); notify(t('bookmarkSaved'));});
     button(t('link'), t('linkTitle'), async () => {

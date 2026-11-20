@@ -246,8 +246,15 @@ def main():
             assert abs(widget.bounding_box()['width'] - widget.evaluate('(e)=>e.offsetWidth')) < 1
             click_control('Вписать в окно / исходный масштаб')
             assert abs(widget.bounding_box()['width'] - fitted_width) < 1
-            control('Яркость', '''function(){this.value='1.4';this.dispatchEvent(new Event('input'));}''')
-            assert widget.evaluate('(e)=>getComputedStyle(e).filter') == 'brightness(1.4)'
+            page.evaluate('''() => {
+                window.playerShortcut = event => {
+                    if (event.key === 'ArrowRight' || event.key === 'Escape') event.preventDefault();
+                };
+                document.addEventListener('keydown', window.playerShortcut, true);
+            }''')
+            control('Яркость', 'function(){this.focus()}')
+            page.keyboard.press('ArrowRight')
+            assert widget.evaluate('(e)=>getComputedStyle(e).filter') == 'brightness(1.1)'
             control('Яркость', '''function(){this.value='1';this.dispatchEvent(new Event('input'));}''')
             click_control('Полный экран')
             page.wait_for_function('document.fullscreenElement === document.documentElement')
@@ -255,12 +262,15 @@ def main():
             page.wait_for_function('!document.fullscreenElement')
             for _ in range(2):
                 click_control('Получить ссылку для повторного открытия этого блока')
+                page.mouse.move(250, 200)
                 link_state = control('Ссылка на блок', '''function(){
-                    return {open:this.closest('dialog').open, href:this.value, selection:this.selectionEnd-this.selectionStart};
+                    return {open:this.closest('dialog').open, href:this.value, selection:this.selectionEnd-this.selectionStart,
+                            focused:this.getRootNode().activeElement===this};
                 }''')
-                assert link_state['open'] and '#__sw_local=' in link_state['href']
+                assert link_state['open'] and link_state['focused'] and '#__sw_local=' in link_state['href'], link_state
                 assert link_state['selection'] == len(link_state['href'])
                 page.keyboard.press('Escape')
+            page.evaluate("document.removeEventListener('keydown', window.playerShortcut, true)")
             print('PASS: zoom, original size, brightness, toolbar fullscreen and repeated link dialog')
 
             click_control('Сохранить или забыть размер и положение окна')

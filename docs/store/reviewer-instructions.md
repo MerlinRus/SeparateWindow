@@ -1,4 +1,4 @@
-# Reviewer instructions — Separate Window 1.4.10
+# Reviewer instructions — Separate Window 1.4.11
 
 No account, credentials, payment, external application or server is required.
 The publisher is Mycelium; support: qobuz43@gmail.com.
@@ -16,6 +16,8 @@ For a supported player, click the video surface in the picker to select the whol
 Resize a detached YouTube window and hover or click around 70% of the timeline. The pointer and preview or seek position should agree, and the window should have no outer scrollbars. Repeat after using the zoom buttons.
 
 Resize a detached Twitch player and verify that the video and controls follow the player bounds without outer scrollbars. Open Settings, choose a quality option, then reopen the menu to verify the selection. Also resize a detached cross-origin iframe and verify that its own viewport follows the window. Run `python tests/player_layout.py` to reproduce these cases locally.
+
+In a detached RUTUBE embed, open the native gear menu and the quality submenu. In the extension toolbar, focus the brightness slider and press an arrow key, then open the block link and press Escape. If the selected video has not loaded its metadata, “Always on top” should ask you to start playback.
 8. Start a video and use “Always on top” in the hover toolbar. Chrome opens the video in its built-in picture-in-picture player, including nested cross-origin frames inside closed web components. Press “Unpin” or close the floating window to return to the player. Site controls and subtitles may be unavailable, and some players prohibit PiP.
 
 9. Change Language in the extension menu using the RU / EN buttons (browser language is the initial default). Verify that the popup, existing picker/toolbar, tooltips, messages and context menu update without reloading the page, and the preference survives reopening the menu.

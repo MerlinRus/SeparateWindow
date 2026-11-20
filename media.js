@@ -84,9 +84,10 @@ async function videoPinFrame(selector, toggle = false) {
         const rect = node.getBoundingClientRect();
         const active = node.getRootNode().pictureInPictureElement === node;
         const area = rect.width * rect.height;
-        if (active || (node.videoWidth && node.readyState && area > 0 && area >= minimumArea &&
+        const ready = !!(node.videoWidth && node.readyState);
+        if (active || (area > 0 && area >= minimumArea &&
             getComputedStyle(node).visibility === 'visible')) {
-          candidates.push({video: node, active, playing: !node.paused && !node.ended, area});
+          candidates.push({video: node, active, ready, playing: ready && !node.paused && !node.ended, area});
         }
         continue;
       }
@@ -98,16 +99,18 @@ async function videoPinFrame(selector, toggle = false) {
     }
   }
   const candidate = candidates.sort((a, b) =>
-    Number(b.active) - Number(a.active) || Number(b.playing) - Number(a.playing) || b.area - a.area
+    Number(b.active) - Number(a.active) || Number(b.ready) - Number(a.ready) ||
+    Number(b.playing) - Number(a.playing) || b.area - a.area
   )[0];
   if (!candidate) return toggle ? {error: 'pipNoVideo'} : null;
-  const {video, active, playing, area} = candidate;
-  if (!toggle) return {active, playing, area};
+  const {video, active, ready, playing, area} = candidate;
+  if (!toggle) return {active, ready, playing, area};
   try {
     if (active) {
       await document.exitPictureInPicture();
       return {active: false};
     }
+    if (!ready) return {error: 'pipNoVideo'};
     if (!document.pictureInPictureEnabled || video.disablePictureInPicture) return {error: 'pipBlocked'};
     await video.requestPictureInPicture();
     globalThis.__swPinnedVideo = video;
@@ -144,16 +147,42 @@ function cleanMediaFrame(selector, roots, enabled, mediaPaths = []) {
   if (path.length && !roots.some(root => key === root || key.startsWith(root + '.'))) return;
   const scope = path.length ? document.documentElement : document.querySelector(selector);
   if (!scope) return;
+  function mediaNodes(includeFrames, onShadow) {
+    const result = [], pending = [scope];
+    while (pending.length) {
+      const node = pending.pop();
+      if (node.matches(includeFrames ? 'video,iframe' : 'video')) {
+        result.push(node);
+        continue;
+      }
+      const shadow = node instanceof HTMLElement && (node.shadowRoot || chrome.dom?.openOrClosedShadowRoot(node));
+      if (shadow) {
+        onShadow?.(shadow);
+        for (let i = shadow.children.length - 1; i >= 0; i--) pending.push(shadow.children[i]);
+      }
+      for (let i = node.children.length - 1; i >= 0; i--) pending.push(node.children[i]);
+    }
+    return result;
+  }
   if (enabled === 'probe') {
     const r = scope.getBoundingClientRect(), area = path.length ? innerWidth * innerHeight : r.width * r.height;
-    const videos = [...scope.querySelectorAll('video'), ...(scope.matches('video') ? [scope] : [])];
+    const videos = mediaNodes(false);
     return videos.some(video => {const v = video.getBoundingClientRect(); return v.width * v.height >= area * .5 && v.width > 0 && getComputedStyle(video).visibility !== 'hidden';}) ? key : null;
   }
   const token = 'data-sw-media-' + crypto.randomUUID().replaceAll('-', '');
   const branch = token + '-branch', targetAttr = token + '-target';
-  let target, controls, style, ancestors = [];
+  let target, controls;
+  let styles = [], ancestors = [];
+  const shadowRoots = new Set();
+  function addStyle(root, css) {
+    const style = document.createElement('style');
+    style.textContent = css;
+    (root === document ? document.documentElement : root).append(style);
+    styles.push(style);
+  }
   function reset() {
-    style?.remove();
+    for (const style of styles) style.remove();
+    styles = [];
     target?.removeAttribute(targetAttr);
     if (target?.localName === 'video' && controls) target.setAttribute('controls', '');
     for (const node of ancestors) node.removeAttribute(branch);
@@ -167,7 +196,7 @@ function cleanMediaFrame(selector, roots, enabled, mediaPaths = []) {
     reset();
     const scopeRect = scope.getBoundingClientRect();
     const area = path.length ? innerWidth * innerHeight : scopeRect.width * scopeRect.height;
-    const nodes = [...scope.querySelectorAll('video,iframe'), ...(scope.matches('video,iframe') ? [scope] : [])];
+    const nodes = mediaNodes(true, observeShadow);
     const candidates = nodes.filter(node => {
       const r = node.getBoundingClientRect();
       if (node.localName === 'iframe') {
@@ -189,30 +218,44 @@ function cleanMediaFrame(selector, roots, enabled, mediaPaths = []) {
     if (target.localName === 'video') target.removeAttribute('controls');
     target.setAttribute(targetAttr, '');
     if (target === scope && !path.length) {
-      style = document.createElement('style');
-      style.textContent = `[${targetAttr}]{border:0!important;outline:0!important;box-shadow:none!important;object-fit:contain!important;background:#000!important}`;
-      document.documentElement.append(style); return;
+      addStyle(document, `[${targetAttr}]{border:0!important;outline:0!important;box-shadow:none!important;object-fit:contain!important;background:#000!important}`);
+      return;
     }
-    for (let node = target.parentElement; node; node = node.parentElement) {
+    const parent = node => node.parentElement || node.getRootNode().host;
+    for (let node = parent(target); node; node = parent(node)) {
       node.setAttribute(branch, ''); ancestors.push(node);
       if (node === scope) break;
     }
-    style = document.createElement('style');
     const b = `[${branch}]`, t = `[${targetAttr}]`;
-    style.textContent = `
+    const hideSiblings = `> :not(${b}):not(${t}):not(style):not(script):not(link){display:none!important}`;
+    const rules = `
       ${b}:not(${path.length ? 'html' : selector}){display:contents!important;position:static!important;transform:none!important;filter:none!important;contain:none!important;overflow:visible!important;background:none!important;border:0!important;padding:0!important;margin:0!important;box-shadow:none!important}
       ${b}::before,${b}::after{display:none!important;content:none!important}
-      ${b}>:not(${b}):not(${t}):not(style):not(script):not(link){display:none!important}
-      ${path.length ? 'html,body{background:#000!important;overflow:hidden!important;margin:0!important;padding:0!important}' : ''}
+      ${b} ${hideSiblings}
       ${t}{position:${path.length ? 'fixed' : 'absolute'}!important;inset:0!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;min-width:0!important;min-height:0!important;transform:none!important;margin:0!important;padding:0!important;border:0!important;object-fit:contain!important;background:#000!important;visibility:visible!important}
     `;
-    document.documentElement.append(style);
+    const roots = new Set([target.getRootNode(), ...ancestors.map(node => node.getRootNode())]);
+    for (const root of roots) {
+      const rootRules = root !== document ? `:host(${b}) ${hideSiblings}` :
+        path.length ? 'html,body{background:#000!important;overflow:hidden!important;margin:0!important;padding:0!important}' : '';
+      addStyle(root, `${rules}\n${rootRules}`);
+    }
   }
   const observer = new MutationObserver(update);
-  observer.observe(scope, {subtree:true, childList:true, attributes:true, attributeFilter:['controls']});
+  const observation = {subtree:true, childList:true, attributes:true, attributeFilter:['controls']};
+  function observeShadow(root) {
+    if (shadowRoots.has(root)) return;
+    shadowRoots.add(root);
+    observer.observe(root, observation);
+    root.addEventListener('loadedmetadata', update, true);
+  }
+  observer.observe(scope, observation);
   document.addEventListener('loadedmetadata', update, true);
   update();
   globalThis.__swCleanMedia = () => {
-    observer.disconnect(); document.removeEventListener('loadedmetadata', update, true); reset();
+    observer.disconnect();
+    document.removeEventListener('loadedmetadata', update, true);
+    for (const root of shadowRoots) root.removeEventListener('loadedmetadata', update, true);
+    reset();
   };
 }

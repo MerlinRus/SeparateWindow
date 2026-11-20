@@ -33,8 +33,9 @@ class PipHandler(Handler):
             '/shadow': '''<style>body{margin:0}#shadow-player{width:640px;height:360px}</style>
                 <div id="shadow-player"></div><video id="decoy" autoplay muted></video>''' + STREAM + '''
                 <script>const root = document.querySelector('#shadow-player').attachShadow({mode: 'closed'});
-                root.innerHTML = '<video style="width:100%;height:100%" autoplay muted></video>';
+                root.innerHTML = '<video style="width:100%;height:100%" autoplay muted controls></video><button id="shadow-hud" style="position:absolute;top:0">Settings</button>';
                 window.selectedVideo = root.querySelector('video');
+                window.shadowHud = root.querySelector('#shadow-hud');
                 selectedVideo.srcObject = document.querySelector('#decoy').srcObject;</script>''',
             '/nested': f'''<style>body{{margin:0}}iframe{{width:100%;height:100%;border:0}}</style>
                 <iframe src="http://127.0.0.1:{port}/video"></iframe><button id="frame-panel" style="position:fixed;top:0">Season</button>''',
@@ -79,6 +80,8 @@ class PipHandler(Handler):
                 timeline.onclick = event => {movie.dataset.seek = percentage(event);};</script>
                 <style>#quality-menu{pointer-events:auto}</style>''',
             '/video': player,
+            '/unready': '<video id="unready" controls style="width:640px;height:360px"></video>',
+            '/unready-shell': '<vk-video-player id="unready" style="display:block;width:640px;height:360px">Loading</vk-video-player>',
         }
         if path not in pages:
             return super().do_GET()
@@ -167,7 +170,7 @@ def main():
                 close_browser = context.close
             try:
                 worker = context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
-                labels = worker.evaluate("Object.fromEntries(['pinTitle','unpinTitle','pinPreviewContinueTitle','pipBlocked','showPlayer','onlyVideo','zoomOut'].map(k=>[k,chrome.i18n.getMessage(k)]))")
+                labels = worker.evaluate("Object.fromEntries(['pinTitle','unpinTitle','pinPreviewContinueTitle','pipBlocked','pipNoVideo','showPlayer','onlyVideo','zoomOut'].map(k=>[k,chrome.i18n.getMessage(k)]))")
                 page.goto(url)
                 video_frame = next(frame for frame in page.frames if frame.url.endswith('/video'))
                 video_frame.wait_for_function('document.querySelector("video").readyState>=2')
@@ -253,6 +256,11 @@ def main():
                 page.mouse.click(120, 120)
                 page.wait_for_function('document.querySelector("#shadow-player").getAttributeNames().some(x=>x.endsWith("-target"))')
                 page.locator('#shadow-player').evaluate("(player) => {player.style.width = '640px'; player.style.height = '360px'; player.id = 'updated-player'}")
+                button('onlyVideo')
+                page.wait_for_function('!selectedVideo.controls && getComputedStyle(shadowHud).display === "none"', timeout=2000)
+                button('showPlayer')
+                page.wait_for_function('selectedVideo.controls && getComputedStyle(shadowHud).display !== "none"')
+                print('PASS: only-video mode hides and restores controls inside a closed player root', flush=True)
                 button('pinTitle')
                 page.wait_for_timeout(300)
                 notice = node_with('role', 'status')
@@ -345,6 +353,29 @@ def main():
                 worker.evaluate('''async url => {const [tab]=await chrome.tabs.query({url});await restore(tab.id)}''', hud_url)
                 assert page.evaluate('getComputedStyle(document.documentElement).overflow') == 'scroll'
                 print('PASS: player picked from the video surface, settings/seek reachable, single-click pause and explicit fullscreen', flush=True)
+
+                for path in ('/unready', '/unready-shell'):
+                    unready_url = url.replace('/pip', path)
+                    page.goto(unready_url)
+                    worker.evaluate('''async url => {
+                        const [tab] = await chrome.tabs.query({url});
+                        await tell(tab.id, 'select');
+                        await chrome.scripting.executeScript({target: {tabId: tab.id}, func: () => {
+                            navigator.mediaDevices.getDisplayMedia = () => {
+                                document.documentElement.dataset.captureRequested = 'yes';
+                                return Promise.reject(new Error('Unexpected tab capture'));
+                            };
+                        }});
+                    }''', unready_url)
+                    page.mouse.click(140, 120)
+                    page.wait_for_function('document.querySelector("#unready").getAttributeNames().some(a=>a.endsWith("-target"))')
+                    button('pinTitle')
+                    page.wait_for_timeout(350)
+                    notice = node_with('role', 'status')
+                    assert notice and labels['pipNoVideo'] in json.dumps(notice, ensure_ascii=False), path
+                    assert page.evaluate('document.documentElement.dataset.captureRequested === undefined')
+                    worker.evaluate('''async url => {const [tab]=await chrome.tabs.query({url});await restore(tab.id)}''', unready_url)
+                print('PASS: an unready video explains how to start PiP without asking to capture the tab', flush=True)
 
             finally:
                 close_browser()

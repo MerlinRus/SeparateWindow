@@ -1,1 +1,1 @@
-Fixed the Twitch settings menu in detached windows, including video quality selection.
+Fixed the quality menu in RUTUBE embeds, keyboard brightness controls, and the link dialog. Video only now works inside closed player components. Always on top explains when playback needs to start first.

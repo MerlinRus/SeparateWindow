@@ -72,6 +72,37 @@ TWITCH_LAYOUT = '''<!doctype html><html class="site"><meta charset="utf-8">
   }
 </script></html>'''
 
+RUTUBE_EMBED_LAYOUT = '''<!doctype html><meta charset="utf-8">
+<style>
+  body { margin: 0; }
+  .touch-handlers-layout-module__layout___test { width: 640px; height: 360px; position: relative; }
+  video { width: 100%; height: 100%; }
+  #settings { position: absolute; bottom: 12px; right: 12px; }
+  #raichuSettingsPanel { position: fixed; bottom: 70px; right: 36px; padding: 12px; background: white; }
+</style>
+<main>
+  <div class="touch-handlers-layout-module__layout___test">
+    <video></video><button id="settings">Settings</button>
+  </div>
+  <div data-floating-ui-portal id="unrelated">Unrelated portal</div>
+</main>
+<script>
+  document.querySelector('#settings').onclick = () => {
+    const root = document.createElement('div');
+    root.setAttribute('data-floating-ui-portal', '');
+    root.innerHTML = '<div id="raichuSettingsPanel"><button data-testid="qualityButton">Quality</button></div>';
+    document.querySelector('main').append(root);
+    const menu = root.firstChild;
+    menu.querySelector('button').onclick = () => {
+      menu.innerHTML = '<button>720p</button>';
+      menu.querySelector('button').onclick = () => {
+        document.querySelector('video').dataset.quality = '720p';
+        root.remove();
+      };
+    };
+  };
+</script>'''
+
 
 class PlayerHandler(Handler):
     def do_GET(self):
@@ -114,6 +145,25 @@ def test_embedded_player(page, worker, url):
     assert frame.evaluate('window.hits') == 2
     worker.evaluate('''async url => {const [tab] = await chrome.tabs.query({url}); await restore(tab.id)}''', url)
     print('PASS: cross-origin embedded viewport follows popup resizing and preserves controls and state')
+
+
+def test_rutube_settings(page, worker):
+    url = 'https://rutube.ru/play/sw-test-settings/'
+    page.route(url, lambda route: route.fulfill(content_type='text/html', body=RUTUBE_EMBED_LAYOUT))
+    page.goto(url)
+    worker.evaluate('''async url => {const [tab] = await chrome.tabs.query({url}); await tell(tab.id, 'select')}''', url)
+    page.mouse.click(260, 140)
+    page.wait_for_function('document.querySelector("video").parentElement.getAttributeNames().some(a=>a.endsWith("-target"))')
+    page.locator('#settings').click()
+    menu = page.locator('#raichuSettingsPanel')
+    menu.wait_for(state='visible', timeout=1500)
+    assert not page.locator('#unrelated').is_visible()
+    menu.get_by_role('button', name='Quality').click()
+    menu.get_by_role('button', name='720p').click()
+    assert page.locator('video').get_attribute('data-quality') == '720p'
+    worker.evaluate('''async url => {const [tab] = await chrome.tabs.query({url}); await restore(tab.id)}''', url)
+    assert page.locator('#unrelated').is_visible()
+    print('PASS: embedded RUTUBE settings and quality remain interactive, unrelated portals stay hidden')
 
 
 def main():
@@ -187,6 +237,7 @@ def main():
                     assert page.evaluate('getComputedStyle(document.documentElement).overflow') == 'scroll'
                     print('PASS: Twitch layout, controls, settings portal, quality selection, fullscreen and live restore')
                     test_embedded_player(page, worker, url.replace('/twitch-layout', '/embedded'))
+                    test_rutube_settings(page, worker)
                 finally:
                     context.close()
         finally:
