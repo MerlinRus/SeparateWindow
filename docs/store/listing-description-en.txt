@@ -12,7 +12,7 @@ Features:
 - Return the live page to a regular tab with “Back to tab”.
 - Recover the page as a regular tab after closing the popup with its native close button.
 - Remember window size and position for individual pages.
-- Zoom, rotation, brightness and full-screen mode.
+- Zoom, rotation and full-screen mode.
 - Save the visible part of an element as a PNG screenshot.
 - Create bookmarks in “Separate windows” and links that reopen the selected element.
 - Alt+Shift+S shortcut and a native context-menu command.

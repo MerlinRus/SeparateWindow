@@ -1,4 +1,4 @@
-# Reviewer instructions — Separate Window 1.4.12
+# Reviewer instructions — Separate Window 1.4.13
 
 No account, credentials, payment, external application or server is required.
 The publisher is Mycelium; support: qobuz43@gmail.com.
@@ -6,7 +6,7 @@ The publisher is Mycelium; support: qobuz43@gmail.com.
 1. Open any ordinary HTTP(S) page with a visible video, image or interactive widget. Internal Chrome pages and the Chrome Web Store restrict extensions.
 2. Click the extension icon and “Select a page element”. Move the pointer to an element; scrolling changes the selected ancestor. Click to open it in a popup. Esc cancels.
 3. Only the chosen element should be visible. Hover in the top-right corner to reveal translucent controls. Moving away hides them.
-4. Test zoom/rotation/brightness, save/remove geometry and the PNG screenshot button. The controls are hidden from screenshots.
+4. Test zoom, rotation, saving and clearing window geometry, and taking a PNG screenshot. The controls are hidden from screenshots.
 5. Use the star to create a bookmark in “Separate windows”. Its link reopens the saved element when the extension is installed. Regular later visits show a small reopen button.
 6. Use “Back to tab” to restore the original page without reloading. Native popup close instead recovers the page by loading it in a normal tab; live JS/media state is not guaranteed in that case.
 7. A cross-origin iframe is selected as a whole. Selection intercepts pointer events instead of toggling the player's play/pause controls.
@@ -17,7 +17,7 @@ Resize a detached YouTube window and hover or click around 70% of the timeline. 
 
 Resize a detached Twitch player and verify that the video and controls follow the player bounds without outer scrollbars. Open Settings, choose a quality option, then reopen the menu to verify the selection. Also resize a detached cross-origin iframe and verify that its own viewport follows the window. Run `python tests/player_layout.py` to reproduce these cases locally.
 
-In a detached RUTUBE embed, open the native gear menu and the quality submenu. In the extension toolbar, focus the brightness slider and press an arrow key, then open the block link and press Escape. If the selected video has not loaded its metadata, “Always on top” should ask you to start playback.
+In a detached RUTUBE embed, open the native gear menu and the quality submenu. Open the block link from the extension toolbar and press Escape to close it. If the selected video has not loaded its metadata, “Always on top” should ask you to start playback.
 8. Start a video and use “Always on top” in the hover toolbar. Chrome opens the video in its built-in picture-in-picture player, including nested cross-origin frames inside closed web components. Press “Unpin” or close the floating window to return to the player. Site controls and subtitles may be unavailable, and some players prohibit PiP.
 
 9. Change Language in the extension menu using the RU / EN buttons (browser language is the initial default). Verify that the popup, existing picker/toolbar, tooltips, messages and context menu update without reloading the page, and the preference survives reopening the menu.

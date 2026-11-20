@@ -1,1 +1,1 @@
-Improved video playback smoothness in detached windows at the default brightness. A YouTube 1080p60 test recorded zero dropped frames.
+Removed the brightness control and its filter, which caused dropped video frames in detached windows.

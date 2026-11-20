@@ -24,7 +24,7 @@
   const playerControlsAttr = `data-${token}-player-controls`;
   let selected, selector, sourceUrl, initialSize, cropStyle, ui, shadow, picker, recoveryTimer;
   let selectionObserver, selectionTimer, selectionGeneration = 0;
-  let ancestors = [], ancestorLayout = [], cropObserver, scale = 1, rotation = 0, brightness = 1, fit = true;
+  let ancestors = [], ancestorLayout = [], cropObserver, scale = 1, rotation = 0, fit = true;
   let marker, markerTarget, markerEvents, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false, cleanVideo = false;
   let blockPreview;
   let playerControls;
@@ -68,15 +68,15 @@
       button:hover{background:#3c5273}button:focus-visible,input:focus-visible{outline:2px solid #9fc5ff;outline-offset:2px}
       .bar{pointer-events:auto;position:fixed;top:0;right:0;width:max-content;max-width:100%;padding:6px;display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:5px;opacity:0;transition:opacity 120ms ease-out}
       .bar:hover,.bar:focus-within{opacity:.75}.bar:focus-within{transition:none}
-      .bar button,.bar input{pointer-events:none}.bar:hover button,.bar:hover input,.bar:focus-within button,.bar:focus-within input{pointer-events:auto}
-      .bar button{background:#152031}.bar button:hover{background:#344963}.bar span{font:12px system-ui;color:#fff;white-space:nowrap;text-shadow:0 1px 3px #000}
+      .bar button{pointer-events:none}.bar:hover button,.bar:focus-within button{pointer-events:auto}
+      .bar button{background:#152031}.bar button:hover{background:#344963}
       @media(prefers-reduced-motion:reduce){.bar{transition:none}}
       .outline{position:fixed;border:3px solid #5089ff;background:#5089ff18;pointer-events:none}
       .shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none;outline:none}
       .hint,.notice{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:12px 18px;border-radius:8px;background:#101a2b;color:#fff;font:14px/1.5 system-ui;text-align:center;box-shadow:0 3px 15px #0005;pointer-events:auto}
       .hint button{margin-left:12px}.marker{position:fixed;pointer-events:none;opacity:0;background:#2357d9;box-shadow:0 2px 8px #0005}
       .marker.visible,.marker:focus-visible{opacity:.5;pointer-events:auto}
-      input[type=range]{width:75px}dialog{pointer-events:auto;max-width:90vw;width:560px;border:1px solid #526077;border-radius:12px;background:#101a2b;color:#fff;padding:20px;font:14px system-ui}dialog::backdrop{background:#0008}dialog input{width:100%;padding:10px;margin:12px 0;color:#fff;background:#263349;border:1px solid #526077}
+      dialog{pointer-events:auto;max-width:90vw;width:560px;border:1px solid #526077;border-radius:12px;background:#101a2b;color:#fff;padding:20px;font:14px system-ui}dialog::backdrop{background:#0008}dialog input{width:100%;padding:10px;margin:12px 0;color:#fff;background:#263349;border:1px solid #526077}
     `;
     root.append(style);
     document.documentElement.append(host);
@@ -235,7 +235,6 @@
     const twitch = selected.matches(twitchPlayerSelector);
     const knownPlayer = selected.matches(layoutPlayerSelector);
     const resizePlayer = initialSize.media || knownPlayer;
-    const brightnessFilter = brightness === 1 ? 'none' : `brightness(${brightness})`;
     // Keep native settings that these players render in a sibling portal.
     const settingsLayer = !cleanVideo && (twitch ? twitchSettingsLayer : rutubePage && knownPlayer && rutubeSettingsLayer);
     // Resizing in layout keeps embedded viewports and player controls in sync
@@ -259,7 +258,7 @@
       html${ancestor}{display:block!important;background:#000!important}
       ${ancestor} > :not(${ancestor}):not(${target}):not(${controls}):not(${host}):not(style):not(script):not(link)${settingsLayer ? `:not(${settingsLayer})` : ''}{display:none!important}
       ${target},${controls}{position:fixed!important;inset:auto!important;width:${width}!important;height:${height}!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;${placement}transform-origin:center!important;box-sizing:border-box!important;}
-      ${target}{display:${initialSize.display}!important;z-index:2147483640!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:${brightnessFilter}!important;visibility:visible!important;}
+      ${target}{display:${initialSize.display}!important;z-index:2147483640!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:none!important;visibility:visible!important;}
       ${target}:fullscreen{inset:0!important;width:100%!important;height:100%!important;transform:none!important}
       ${controls}{z-index:2147483641!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;${cleanVideo ? 'display:none!important' : ''}}
       ${host}{display:block!important}
@@ -480,21 +479,14 @@
     button('+', t('zoomIn'), () => {scale = Math.min(5, scale + .1); renderCrop();});
     button(t('fit'), t('fitTitle'), button => {fit = !fit; scale = 1; button.textContent = fit ? t('fit') : '1:1'; renderCrop();});
     button('↻', t('rotateTitle'), () => {rotation = (rotation + 90) % 360; renderCrop();});
-    const label = document.createElement('span'); label.textContent = t('brightness');
-    const range = document.createElement('input'); range.type = 'range'; range.min = '.2'; range.max = '2.5'; range.step = '.1'; range.value = '1'; range.setAttribute('aria-label', t('brightness'));
-    range.oninput = () => {brightness = Number(range.value); renderCrop();}; bar.append(label, range);
-    const sliderKeys = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);
-    // Keep page shortcuts away from focused extension controls and the modal.
+    // Keep page shortcuts away from the link dialog.
     window.addEventListener('keydown', event => {
       const dialog = shadow.querySelector('dialog[open]');
-      if (dialog) {
-        event.stopImmediatePropagation();
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          dialog.close();
-        }
-      } else if (shadow.activeElement === range && sliderKeys.has(event.key)) {
-        event.stopImmediatePropagation();
+      if (!dialog) return;
+      event.stopImmediatePropagation();
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        dialog.close();
       }
     }, {capture: true, signal: toolbarEvents.signal});
     button(t('snapshot'), t('snapshotTitle'), screenshot);
@@ -552,7 +544,7 @@
     if (!rect.width || !rect.height) throw new Error(t('hiddenBlock'));
     selector = cssSelector(element); savedSelector = selector; sourceUrl = location.href;
     initialSize = {width: rect.width, height: rect.height, display: getComputedStyle(element).display, media: element.matches('video,iframe,frame')};
-    selected = element; scale = 1; rotation = 0; brightness = 1; fit = true;
+    selected = element; scale = 1; rotation = 0; fit = true;
     removeMarker(); ui?.remove(); selected.setAttribute(targetAttr, '');
     markAncestors();
     syncPlayerControls();

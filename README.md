@@ -4,7 +4,7 @@
 
 ![Separate Window](icons/icon128.png)
 
-Материалы и инструкция публикации: [docs/store/README.md](docs/store/README.md). Команда `python tools/package.py` собирает `dist/separate-window-1.4.12.zip` для Chrome Web Store и отдельный архив с изображениями и текстами `dist/chrome-web-store-materials-1.4.12.zip`. Результаты проверок плееров: [docs/player-checks.md](docs/player-checks.md).
+Материалы и инструкция публикации: [docs/store/README.md](docs/store/README.md). Команда `python tools/package.py` собирает `dist/separate-window-1.4.13.zip` для Chrome Web Store и отдельный архив с изображениями и текстами `dist/chrome-web-store-materials-1.4.13.zip`. Результаты проверок плееров: [docs/player-checks.md](docs/player-checks.md).
 
 Издатель: **Mycelium**. Поддержка: **qobuz43@gmail.com**. [Сайт Separate Window](https://separate.maark.ru/) · [Политика конфиденциальности](https://separate.maark.ru/privacy.html).
 
@@ -49,7 +49,6 @@
 | − / + | Уменьшает / увеличивает блок |
 | Вписать / 1:1 | Переключает вписывание в окно и исходный масштаб |
 | ↻ | Поворачивает на 90° |
-| Яркость | Меняет яркость выбранного блока |
 | Снимок | Сохраняет видимую часть блока в PNG |
 | ★ | Создаёт закладку в папке **Separate windows** |
 | Ссылка | Показывает ссылку для открытия выбранного блока; выделенную ссылку можно скопировать Ctrl+C |

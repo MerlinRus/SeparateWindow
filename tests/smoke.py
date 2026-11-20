@@ -246,17 +246,14 @@ def main():
             assert abs(widget.bounding_box()['width'] - widget.evaluate('(e)=>e.offsetWidth')) < 1
             click_control('Вписать в окно / исходный масштаб')
             assert abs(widget.bounding_box()['width'] - fitted_width) < 1
+            assert control(panel, "function(){return this.querySelector('input[type=range]') === null}"), 'The toolbar must not contain a brightness slider'
+            assert widget.evaluate('(e)=>getComputedStyle(e).filter') == 'none', 'The extension must leave brightness unfiltered'
             page.evaluate('''() => {
                 window.playerShortcut = event => {
-                    if (event.key === 'ArrowRight' || event.key === 'Escape') event.preventDefault();
+                    if (event.key === 'Escape') event.preventDefault();
                 };
                 document.addEventListener('keydown', window.playerShortcut, true);
             }''')
-            control('Яркость', 'function(){this.focus()}')
-            page.keyboard.press('ArrowRight')
-            assert widget.evaluate('(e)=>getComputedStyle(e).filter') == 'brightness(1.1)'
-            control('Яркость', '''function(){this.value='1';this.dispatchEvent(new Event('input'));}''')
-            assert widget.evaluate('(e)=>getComputedStyle(e).filter') == 'none', 'Neutral brightness should not apply a compositing filter'
             click_control('Полный экран')
             page.wait_for_function('document.fullscreenElement === document.documentElement')
             click_control('Полный экран')
@@ -272,7 +269,7 @@ def main():
                 assert link_state['selection'] == len(link_state['href'])
                 page.keyboard.press('Escape')
             page.evaluate("document.removeEventListener('keydown', window.playerShortcut, true)")
-            print('PASS: zoom, original size, brightness, toolbar fullscreen and repeated link dialog')
+            print('PASS: zoom, original size, no brightness filter, toolbar fullscreen and repeated link dialog')
 
             click_control('Сохранить или забыть размер и положение окна')
             page.wait_for_timeout(200)
