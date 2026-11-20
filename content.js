@@ -235,6 +235,7 @@
     const twitch = selected.matches(twitchPlayerSelector);
     const knownPlayer = selected.matches(layoutPlayerSelector);
     const resizePlayer = initialSize.media || knownPlayer;
+    const brightnessFilter = brightness === 1 ? 'none' : `brightness(${brightness})`;
     // Keep native settings that these players render in a sibling portal.
     const settingsLayer = !cleanVideo && (twitch ? twitchSettingsLayer : rutubePage && knownPlayer && rutubeSettingsLayer);
     // Resizing in layout keeps embedded viewports and player controls in sync
@@ -258,7 +259,7 @@
       html${ancestor}{display:block!important;background:#000!important}
       ${ancestor} > :not(${ancestor}):not(${target}):not(${controls}):not(${host}):not(style):not(script):not(link)${settingsLayer ? `:not(${settingsLayer})` : ''}{display:none!important}
       ${target},${controls}{position:fixed!important;inset:auto!important;width:${width}!important;height:${height}!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;${placement}transform-origin:center!important;box-sizing:border-box!important;}
-      ${target}{display:${initialSize.display}!important;z-index:2147483640!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:brightness(${brightness})!important;visibility:visible!important;}
+      ${target}{display:${initialSize.display}!important;z-index:2147483640!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:${brightnessFilter}!important;visibility:visible!important;}
       ${target}:fullscreen{inset:0!important;width:100%!important;height:100%!important;transform:none!important}
       ${controls}{z-index:2147483641!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;${cleanVideo ? 'display:none!important' : ''}}
       ${host}{display:block!important}

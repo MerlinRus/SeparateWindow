@@ -256,6 +256,7 @@ def main():
             page.keyboard.press('ArrowRight')
             assert widget.evaluate('(e)=>getComputedStyle(e).filter') == 'brightness(1.1)'
             control('Яркость', '''function(){this.value='1';this.dispatchEvent(new Event('input'));}''')
+            assert widget.evaluate('(e)=>getComputedStyle(e).filter') == 'none', 'Neutral brightness should not apply a compositing filter'
             click_control('Полный экран')
             page.wait_for_function('document.fullscreenElement === document.documentElement')
             click_control('Полный экран')
