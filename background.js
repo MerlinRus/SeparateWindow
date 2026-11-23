@@ -192,6 +192,21 @@ async function handleTab(tabId, message, sender) {
   const detached = (await chrome.storage.session.get(key))[key];
   const state = detached?.popupWindowId === tab.windowId ? detached : null;
   switch (message.type) {
+    case 'auto-pip': {
+      if (sender.tab) throw new Error(t('commandFailed'));
+      if (tab.incognito || !tab.url?.startsWith('https:')) return {available: false, enabled: false};
+      const url = new URL(tab.url);
+      const preference = `auto-pip:${url.origin}`;
+      return inPreferenceOrder(preference, async () => {
+        if (typeof message.enabled !== 'boolean') {
+          return {available: true, enabled: (await chrome.storage.local.get(preference))[preference] === true};
+        }
+        if (message.enabled) await chrome.storage.local.set({[preference]: true});
+        else await chrome.storage.local.remove(preference);
+        await tell(tabId, 'auto-pip-refresh').catch(() => {});
+        return {available: true, enabled: message.enabled};
+      });
+    }
     case 'clean-media': {
       if (!state || sender.frameId !== 0 || typeof message.selector !== 'string' || message.selector.length > 12000 || !Array.isArray(message.frameRoots) || !message.frameRoots.every(root => typeof root === 'string' && /^\d+$/.test(root))) throw new Error(t('detachFirst'));
       const probes = message.enabled === false ? [] : await chrome.scripting.executeScript({target:{tabId, allFrames:true}, func:cleanMediaFrame, args:[message.selector, message.frameRoots, 'probe']});

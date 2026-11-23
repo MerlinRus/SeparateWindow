@@ -1,1 +1,1 @@
-Removed the brightness control and its filter, which caused dropped video frames in detached windows.
+Added opt-in automatic picture-in-picture on supported sites when switching tabs. Floating previews remember their resized dimensions.

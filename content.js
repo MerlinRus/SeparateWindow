@@ -27,6 +27,7 @@
   let ancestors = [], ancestorLayout = [], cropObserver, scale = 1, rotation = 0, fit = true;
   let marker, markerTarget, markerEvents, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false, cleanVideo = false;
   let blockPreview;
+  let blockPreviewRequestSize;
   let playerControls;
   let toolbarEvents;
   const youtubePlayerSelector = '#movie_player.html5-video-player';
@@ -47,6 +48,50 @@
     '.shaka-video-container', 'media-player', 'mux-player'
   ];
   const playerSelector = playerContainers.join(',');
+
+  const autoPipKey = `auto-pip:${location.origin}`;
+  let autoPipRegistered = false;
+
+  async function openAutoPip() {
+    if (document.pictureInPictureElement || window.documentPictureInPicture?.window || document.fullscreenElement) return;
+    const scope = selected || document;
+    const videos = scope instanceof HTMLVideoElement ? [scope] : scope.querySelectorAll('video');
+    let candidate, largestArea = 0;
+    for (const video of videos) {
+      if (video.paused || video.ended || !video.videoWidth || video.disablePictureInPicture) continue;
+      const {width, height} = video.getBoundingClientRect();
+      const area = width * height;
+      if (area > largestArea && getComputedStyle(video).visibility === 'visible') {
+        candidate = video;
+        largestArea = area;
+      }
+    }
+    // Chrome grants activation to this media-session callback when the site is eligible.
+    await candidate?.requestPictureInPicture().catch(() => {});
+  }
+
+  function setAutoPip(enabled) {
+    if (enabled === autoPipRegistered || !navigator.mediaSession || !document.pictureInPictureEnabled ||
+        location.protocol !== 'https:' || !window.isSecureContext || chrome.extension.inIncognitoContext) return;
+    try {
+      navigator.mediaSession.setActionHandler('enterpictureinpicture', enabled ? openAutoPip : null);
+      autoPipRegistered = enabled;
+    } catch {
+      // Older Chrome versions do not expose this media-session action.
+    }
+  }
+
+  async function refreshAutoPip() {
+    const { [autoPipKey]: enabled } = await chrome.storage.local.get(autoPipKey);
+    setAutoPip(enabled === true);
+  }
+
+  if (location.protocol === 'https:' && window.isSecureContext && !chrome.extension.inIncognitoContext) {
+    chrome.storage.local.onChanged.addListener(changes => {
+      if (changes[autoPipKey]) setAutoPip(changes[autoPipKey].newValue === true);
+    });
+    refreshAutoPip().catch(() => {});
+  }
 
   async function send(type, extra = {}) {
     const result = await chrome.runtime.sendMessage({type, ...extra});
@@ -340,15 +385,35 @@
     return blockPreview === preview && selected === element;
   }
 
+  function rememberBlockPreviewSize(previewWindow) {
+    if (chrome.extension.inIncognitoContext) return;
+    let width = previewWindow.innerWidth, height = previewWindow.innerHeight;
+    let timeout;
+    function save() {
+      if (timeout === undefined) return;
+      clearTimeout(timeout);
+      timeout = undefined;
+      chrome.storage.local.set({pipPreviewSize: {width, height}}).catch(() => {});
+    }
+    previewWindow.addEventListener('resize', () => {
+      const nextWidth = previewWindow.innerWidth, nextHeight = previewWindow.innerHeight;
+      if (!nextWidth || !nextHeight || (width === nextWidth && height === nextHeight)) return;
+      width = nextWidth;
+      height = nextHeight;
+      clearTimeout(timeout);
+      timeout = setTimeout(save, 250);
+    });
+    previewWindow.addEventListener('pagehide', save, {once: true});
+  }
+
   async function showBlockPreview(preview) {
     clearTimeout(preview.expiry);
     try {
-      const previewWindow = await documentPictureInPicture.requestWindow({
-        width: Math.round(initialSize.width),
-        height: Math.round(initialSize.height)
-      });
+      // Chrome reuses the last position in this tab when the requested size is unchanged.
+      const previewWindow = await documentPictureInPicture.requestWindow(blockPreviewRequestSize);
       if (blockPreview !== preview) {previewWindow.close(); return;}
       preview.window = previewWindow;
+      rememberBlockPreviewSize(previewWindow);
       previewWindow.addEventListener('pagehide', () => closeBlockPreview(preview, false), {once: true});
       previewWindow.document.title = t('pinPreviewTitle');
       previewWindow.document.documentElement.lang = SWI18n.language;
@@ -388,6 +453,9 @@
     }
     const preview = {};
     blockPreview = preview;
+    const savedSize = !blockPreviewRequestSize && !chrome.extension.inIncognitoContext
+      ? chrome.storage.local.get('pipPreviewSize').then(settings => settings.pipPreviewSize).catch(() => undefined)
+      : undefined;
     let stream;
     notify(t('pinChooseTab'));
     try {
@@ -421,6 +489,12 @@
     }
     if (blockPreview !== preview) return;
     track.addEventListener('ended', () => closeBlockPreview(preview), {once: true});
+    const size = await savedSize;
+    if (blockPreview !== preview) return;
+    blockPreviewRequestSize ||= Number.isSafeInteger(size?.width) && size.width > 0 &&
+      Number.isSafeInteger(size?.height) && size.height > 0
+      ? size
+      : {width: Math.round(initialSize.width), height: Math.round(initialSize.height)};
     clearTimeout(noticeTimer);
     shadow?.querySelector('.notice')?.remove();
     if (navigator.userActivation.isActive) {
@@ -671,6 +745,9 @@
         SWI18n.ready.then(startPicker).then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
         return true;
       case 'uncrop': unCrop(false); break;
+      case 'auto-pip-refresh':
+        refreshAutoPip().then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
+        return true;
       case 'pip-state': setPinState(message.active); break;
       case 'returned': detached = false; installMarker(savedSelector); break;
       case 'forget':

@@ -62,8 +62,9 @@ function worker({incognito = false} = {}) {
   vm.runInContext(workerSource, context);
   const content = {tab: tabs.get(1), url, frameId: 0};
   const send = (type, extra) => context.handle({type, ...extra}, content);
+  const popupCommand = (type, extra) => context.handle({type, tabId: 1, ...extra}, {url: extension + 'popup.html'});
   const idle = () => vm.runInContext('inTabOrder(1, () => {})', context);
-  return {chrome, tabs, writes, session, local, messages, warnings, send, idle, context};
+  return {chrome, tabs, writes, session, local, messages, warnings, send, popupCommand, idle, context};
 }
 
 (async () => {
@@ -130,5 +131,23 @@ function worker({incognito = false} = {}) {
     };
     await assert.rejects(run.send('capture'), /activePageRequired/);
   }
-  console.log('PASS: private storage, quota, failed moves, immediate close, context menu, reused placeholder and capture tab switch');
+  {
+    const run = worker(), origin = new URL(url).origin;
+    assert.equal((await run.popupCommand('auto-pip')).enabled, false);
+    await assert.rejects(run.send('auto-pip', {enabled: true}), /commandFailed/);
+    assert.equal((await run.popupCommand('auto-pip', {enabled: true})).enabled, true);
+    assert.equal(run.local.records[`auto-pip:${origin}`], true);
+    assert(run.messages.some(([,type]) => type === 'auto-pip-refresh'));
+    run.tabs.get(1).url = origin + '/another-video';
+    assert.equal((await run.popupCommand('auto-pip')).enabled, true);
+    run.tabs.get(1).url = 'https://other.test/watch';
+    assert.equal((await run.popupCommand('auto-pip')).enabled, false);
+    run.tabs.get(1).url = url;
+    assert.equal((await run.popupCommand('auto-pip', {enabled: false})).enabled, false);
+    assert.equal(run.local.records[`auto-pip:${origin}`], undefined);
+    const privateRun = worker({incognito: true});
+    assert.equal((await privateRun.popupCommand('auto-pip', {enabled: true})).available, false);
+    assert.equal(privateRun.writes.length, 0);
+  }
+  console.log('PASS: private storage, quota, failed moves, immediate close, context menu, reused placeholder, capture tab switch and site-scoped Auto PiP');
 })().catch(error => {console.error(error); process.exitCode = 1;});

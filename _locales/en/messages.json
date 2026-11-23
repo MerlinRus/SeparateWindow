@@ -179,6 +179,12 @@
   "showPlayer": {
     "message": "Show player"
   },
+  "autoPipLabel": {
+    "message": "Auto PiP on this site"
+  },
+  "autoPipHelp": {
+    "message": "Open playing video in picture-in-picture when you switch tabs. Allow automatic picture-in-picture if Chrome asks."
+  },
   "onlyVideo": {
     "message": "Video only"
   },

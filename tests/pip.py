@@ -91,12 +91,74 @@ class PipHandler(Handler):
         self.wfile.write(pages[path].encode())
 
 
-def test_widget_preview(page, video_frame, node_with, button, labels, restore_widget):
-    page.wait_for_function('document.querySelector("#tiny").readyState >= 2')
-    page.locator('#widget').scroll_into_view_if_needed()
-    box = page.locator('#widget').bounding_box()
-    page.mouse.click(box['x'] + 20, box['y'] + box['height'] / 2)
-    page.wait_for_function('document.querySelector("#widget").getAttributeNames().some(x=>x.endsWith("-target"))')
+def test_auto_pip_callback(page, worker):
+    url = 'https://separate-window.test/auto-pip'
+    html = '''<video id="main-video" autoplay muted style="width:640px;height:360px"></video>''' + STREAM + '''
+        <video id="small-video" autoplay muted style="width:160px;height:90px"></video>
+        <script>document.querySelector('#small-video').srcObject = document.querySelector('video').srcObject;</script>'''
+    page.route(url, lambda route: route.fulfill(content_type='text/html', body=html))
+    page.goto(url)
+    page.wait_for_function("[...document.querySelectorAll('video')].every(video => video.videoWidth && !video.paused)")
+    tab_id = worker.evaluate('''async url => {
+        const [tab] = await chrome.tabs.query({url});
+        await chrome.scripting.executeScript({target: {tabId: tab.id}, func: () => {
+            navigator.mediaSession.setActionHandler = (action, callback) => {
+                if (action === 'enterpictureinpicture') globalThis.autoPipTestCallback = callback;
+            };
+        }});
+        return tab.id;
+    }''', url)
+
+    def set_enabled(enabled):
+        return worker.evaluate('''async ([tabId, enabled]) => {
+            const result = await handle({type: 'auto-pip', enabled, tabId}, {url: chrome.runtime.getURL('popup.html')});
+            const [probe] = await chrome.scripting.executeScript({target: {tabId}, func: () => !!globalThis.autoPipTestCallback});
+            return [result.enabled, probe.result];
+        }''', [tab_id, enabled])
+
+    assert set_enabled(True) == [True, True]
+
+    def invoke_callback():
+        return worker.evaluate('''async tabId => {
+            const [result] = await chrome.scripting.executeScript({target: {tabId}, func: async () => {
+                const attempted = [];
+                for (const video of document.querySelectorAll('video')) {
+                    video.requestPictureInPicture = async () => {attempted.push(video.id);};
+                }
+                await globalThis.autoPipTestCallback({reason: 'contentoccluded'});
+                return attempted;
+            }});
+            return result.result;
+        }''', tab_id)
+
+    assert invoke_callback() == ['main-video']
+    page.evaluate("document.querySelector('#main-video').pause()")
+    assert invoke_callback() == ['small-video']
+    page.evaluate("document.querySelector('#small-video').disablePictureInPicture = true")
+    assert invoke_callback() == []
+    page.evaluate("document.querySelector('#main-video').play()")
+    page.locator('#main-video').click()
+    worker.evaluate('''async tabId => {
+        await chrome.scripting.executeScript({target: {tabId}, func: async () => {
+            for (const video of document.querySelectorAll('video')) delete video.requestPictureInPicture;
+            await globalThis.autoPipTestCallback({reason: 'contentoccluded'});
+        }});
+    }''', tab_id)
+    page.wait_for_function("document.pictureInPictureElement?.id === 'main-video'")
+    page.evaluate('document.exitPictureInPicture()')
+    assert set_enabled(False) == [False, False]
+    print('PASS: the site opt-in installs/removes the Auto PiP callback, which opens native PiP for the selected playing video', flush=True)
+
+
+def test_widget_preview(page, worker, video_frame, node_with, button, labels, select_widget, restore_widget):
+    def detach_widget():
+        page.wait_for_function('document.querySelector("#tiny").readyState >= 2')
+        select_widget()
+        page.locator('#widget').scroll_into_view_if_needed()
+        box = page.locator('#widget').bounding_box()
+        page.mouse.click(box['x'] + 20, box['y'] + box['height'] / 2)
+        page.wait_for_function('document.querySelector("#widget").getAttributeNames().some(x=>x.endsWith("-target"))')
+
     def open_preview():
         button('pinTitle')
         try:
@@ -106,6 +168,7 @@ def test_widget_preview(page, video_frame, node_with, button, labels, restore_wi
         page.wait_for_function('documentPictureInPicture.window?.document.querySelector("video")?.readyState >= 2')
         page.evaluate('window.widgetTrack = documentPictureInPicture.window.document.querySelector("video").srcObject.getVideoTracks()[0]')
 
+    detach_widget()
     open_preview()
     settings = page.evaluate('widgetTrack.getSettings()')
     assert settings['frameRate'] == 120, settings
@@ -133,14 +196,40 @@ def test_widget_preview(page, video_frame, node_with, button, labels, restore_wi
     preview_color(1)
     assert not page.evaluate('!!document.pictureInPictureElement')
     assert not video_frame.evaluate('!!document.pictureInPictureElement')
+    geometry = '''() => {const win = documentPictureInPicture.window;
+        return {width: win.innerWidth, height: win.innerHeight, left: win.screenX, top: win.screenY};}'''
+    original = page.evaluate(geometry)
+    page.evaluate('documentPictureInPicture.window.resizeBy(92, 56)')
+    page.wait_for_function(f'original => ({geometry})().width !== original.width', arg=original, timeout=3000)
+    resized = page.evaluate(geometry)
+    assert resized['width'] != original['width'] and resized['height'] != original['height'], resized
+    expected_size = {key: resized[key] for key in ('width', 'height')}
     page.evaluate('documentPictureInPicture.window.close()')
     page.wait_for_function('widgetTrack.readyState === "ended" && !documentPictureInPicture.window')
+    assert worker.evaluate('''async expected => {
+        for (let i = 0; i < 30; i++) {
+            const {pipPreviewSize} = await chrome.storage.local.get('pipPreviewSize');
+            if (pipPreviewSize?.width === expected.width && pipPreviewSize.height === expected.height) return true;
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        return false;
+    }''', expected_size), expected_size
     assert node_with('aria-label', labels['pinTitle'])
     open_preview()
+    assert page.evaluate(geometry) == resized, (resized, page.evaluate(geometry))
     restore_widget()
     page.wait_for_function('widgetTrack.readyState === "ended" && !documentPictureInPicture.window')
     assert page.locator('#widget button').inner_text() == 'Updated'
+    page.reload()
+    detach_widget()
+    open_preview()
+    reopened = page.evaluate(geometry)
+    # Chrome rounds requested CSS pixels on displays with fractional DPI scaling.
+    assert all(abs(reopened[key] - expected_size[key]) <= 1 for key in expected_size), (reopened, expected_size)
+    restore_widget()
+    page.wait_for_function('!documentPictureInPicture.window')
     print('PASS: widget preview negotiates 120 fps, updates live and stops capture on close or restore', flush=True)
+    print('PASS: document PiP reopens at the last bounds and uses the saved size on a fresh page', flush=True)
 def main():
     system_chrome = '--chrome' in sys.argv
     server = ThreadingHTTPServer(('127.0.0.1', 0), PipHandler)
@@ -170,6 +259,9 @@ def main():
                 close_browser = context.close
             try:
                 worker = context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
+                test_auto_pip_callback(page, worker)
+                if '--auto-only' in sys.argv:
+                    return
                 labels = worker.evaluate("Object.fromEntries(['pinTitle','unpinTitle','pinPreviewContinueTitle','pipBlocked','pipNoVideo','showPlayer','onlyVideo','zoomOut'].map(k=>[k,chrome.i18n.getMessage(k)]))")
                 page.goto(url)
                 video_frame = next(frame for frame in page.frames if frame.url.endswith('/video'))
@@ -244,10 +336,11 @@ def main():
                 assert nested_frame.locator('#frame-panel').is_visible()
                 assert video_frame.locator('video').evaluate('(v)=>v.controls')
                 if system_chrome:
-                    worker.evaluate('''async url => {const [tab]=await chrome.tabs.query({url});await tell(tab.id,'select')}''', url)
+                    def select_widget():
+                        worker.evaluate('''async url => {const [tab]=await chrome.tabs.query({url});await tell(tab.id,'select')}''', url)
                     def restore_widget():
                         worker.evaluate('''async url => {const [tab]=await chrome.tabs.query({url});await restore(tab.id)}''', url)
-                    test_widget_preview(page, video_frame, node_with, button, labels, restore_widget)
+                    test_widget_preview(page, worker, video_frame, node_with, button, labels, select_widget, restore_widget)
 
                 shadow_url = url.replace('/pip', '/shadow')
                 page.goto(shadow_url)

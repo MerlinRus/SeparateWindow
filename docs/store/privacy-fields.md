@@ -14,7 +14,7 @@ Reads the current page URL/title and tab/window metadata needed to move the exis
 
 ### storage
 
-Stores the interface language preference, per-page CSS selectors and optional window geometry locally. Uses session storage for the original tab position, tab/window IDs and current URL while detached. No storage.sync or extension server is used.
+Stores language, per-page CSS selectors, optional window geometry, the floating preview size and site-level Auto PiP preferences locally. Uses session storage for the original tab position, tab/window IDs and current URL while detached. No storage.sync or extension server is used.
 
 In Incognito, URLs, chosen elements and window geometry are not saved in persistent settings. Temporary session state allows a detached tab to be returned or recovered.
 
@@ -23,6 +23,8 @@ In Incognito, URLs, chosen elements and window geometry are not saved in persist
 Injects packaged selection/isolation code into already-open pages when no active content-script listener is available. The user starts selection through the extension button, shortcut or context menu. No remote JavaScript is injected.
 
 On an explicit “Always on top” click, packaged code locates the main video within the selected block and its descendant frames and toggles Chrome’s built-in picture-in-picture API. For other blocks, Chrome asks the user to share the current tab. A temporary, silent stream displays only the selected area in a floating preview. Preview pixels are processed in memory, without recording, saving or uploading them. Closing the preview or restoring the original tab stops the stream.
+
+When the user enables Auto PiP for an HTTPS site, packaged code can open a playing video when Chrome calls the media-session callback. Chrome controls site permission and eligibility.
 
 ### contextMenus
 
