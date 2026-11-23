@@ -34,6 +34,7 @@
         <h2 id="tour-guide-heading" tabindex="-1">$video_title</h2>
         <p id="tour-instruction">$video_tip</p>
         <p class="tour-picker">$picker_before <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd>.</p>
+        <p id="tour-return-hint" class="tour-return-hint"><strong>$return_hint_title</strong> $return_hint</p>
         <p id="tour-status" class="tour-status" role="status" hidden></p>
         <a id="tour-install" class="tour-text-button" href="$store">$install</a>
         <div class="tour-actions">
@@ -73,7 +74,11 @@
     <section id="tour-complete" class="tour-complete" aria-labelledby="complete-heading" hidden>
       <h2 id="complete-heading" tabindex="-1">$complete_title</h2>
       <p>$complete_tip</p>
-      <ul><li>$complete_select</li><li>$complete_return</li><li>$complete_pin</li></ul>
+      <ul>
+        <li id="complete-auto-pip"><strong>$complete_auto_pip_title</strong> $complete_auto_pip</li>
+        <li>$complete_pin</li>
+        <li>$complete_select</li>
+      </ul>
       <button id="tour-restart" class="tour-primary" type="button">$restart</button>
       <a class="tour-text-button" href="$home">$home_label</a>
     </section>

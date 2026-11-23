@@ -6,6 +6,7 @@ const workspace = document.querySelector('#tour-workspace');
 const complete = document.querySelector('#tour-complete');
 const heading = document.querySelector('#tour-guide-heading');
 const instruction = document.querySelector('#tour-instruction');
+const returnHint = document.querySelector('#tour-return-hint');
 const status = document.querySelector('#tour-status');
 const install = document.querySelector('#tour-install');
 const next = document.querySelector('#tour-next');
@@ -42,6 +43,7 @@ function render() {
   }
   heading.textContent = copy[active + 'Title'];
   instruction.textContent = copy[active + 'Tip'];
+  returnHint.hidden = active !== 'video';
   status.hidden = !practiced && !wrongBlock;
   status.textContent = practiced ? copy.returned : wrongBlock ? copy.wrongBlock : '';
   status.dataset.kind = practiced ? 'success' : 'retry';
