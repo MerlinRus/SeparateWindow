@@ -750,9 +750,6 @@
         return true;
       case 'pip-state': setPinState(message.active); break;
       case 'returned': detached = false; installMarker(savedSelector); break;
-      case 'forget':
-        stopPendingSelection();
-        savedSelector = null; removeMarker(); break;
       default: return;
     }
     respond({ok: true});

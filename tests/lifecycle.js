@@ -75,7 +75,6 @@ function worker({incognito = false} = {}) {
     assert.equal(run.session.records['window:1'].incognito, true);
     assert.equal((await run.send('window-state')).incognito, true);
     await assert.rejects(run.send('bounds'), /privateBounds/);
-    await run.send('forget');
     assert.equal(run.writes.some(write => write.name === 'local'), false);
     assert.deepEqual(run.local.records['selection:'+url], {selector:'#normal'});
     await run.send('restore');
@@ -133,6 +132,8 @@ function worker({incognito = false} = {}) {
   }
   {
     const run = worker(), origin = new URL(url).origin;
+    const savedSelection = {selector: '#video', bounds: {left: 30, top: 40, width: 600, height: 400}};
+    await run.local.set({[`selection:${url}`]: savedSelection});
     assert.equal((await run.popupCommand('auto-pip')).enabled, false);
     await assert.rejects(run.send('auto-pip', {enabled: true}), /commandFailed/);
     assert.equal((await run.popupCommand('auto-pip', {enabled: true})).enabled, true);
@@ -145,6 +146,7 @@ function worker({incognito = false} = {}) {
     run.tabs.get(1).url = url;
     assert.equal((await run.popupCommand('auto-pip', {enabled: false})).enabled, false);
     assert.equal(run.local.records[`auto-pip:${origin}`], undefined);
+    assert.deepEqual(run.local.records[`selection:${url}`], savedSelection);
     const privateRun = worker({incognito: true});
     assert.equal((await privateRun.popupCommand('auto-pip', {enabled: true})).available, false);
     assert.equal(privateRun.writes.length, 0);

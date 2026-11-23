@@ -144,8 +144,8 @@ def main():
             assert page.evaluate('window.playerEvents') == 0, 'Selection must intercept direct video pointerdown handlers'
             assert page.locator('video').evaluate('(v)=>!v.paused'), 'Selection must preserve playing state'
             command('restore')
-            command('forget')
-            page.locator('video').click()
+            # The saved selection button can cover the top of this small video.
+            page.locator('video').click(position={'x': 40, 'y': 52})
             assert page.evaluate('window.playerEvents') == 1, 'Video pointer events must work again after returning'
             page.locator('video').evaluate('(v)=>v.play()')
             print('PASS: direct video selection preserves playback and restores pointer events')
@@ -366,11 +366,8 @@ def main():
             page.mouse.move(5, 5)
             assert control(marker_label, 'function(){return getComputedStyle(this).opacity}') == '0'
             print('PASS: reopen button hidden outside its block, visible on block/button hover')
-            command('forget')
-            page.wait_for_timeout(150)
-            assert f'selection:{url}' not in state()['local']
             assert not errors, errors
-            print('PASS: automatic link, normal revisit, forget selection, clean worker console')
+            print('PASS: automatic link, normal revisit, clean worker console')
             page.goto(link)
             page.wait_for_timeout(500)
             popup = next(w for w in state()['windows'] if w['type'] == 'popup')

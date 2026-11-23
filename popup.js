@@ -78,7 +78,7 @@ for (const language of document.querySelectorAll('[data-language]')) language.ad
   finally {for (const button of buttons) button.disabled = false;}
 });
 
-for (const button of document.querySelectorAll('#select,#restore,#forget')) {
+for (const button of document.querySelectorAll('#select,#restore')) {
   button.addEventListener('click', async () => {
     button.disabled = true;
     try {

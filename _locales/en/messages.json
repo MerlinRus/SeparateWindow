@@ -29,9 +29,6 @@
   "restoreButton": {
     "message": "Return page to tab"
   },
-  "forgetButton": {
-    "message": "Forget selection for this page"
-  },
   "pageActions": {
     "message": "Page actions"
   },

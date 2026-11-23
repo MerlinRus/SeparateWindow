@@ -29,9 +29,6 @@
   "restoreButton": {
     "message": "Вернуть страницу во вкладку"
   },
-  "forgetButton": {
-    "message": "Забыть выбор для этой страницы"
-  },
   "pageActions": {
     "message": "Действия со страницей"
   },

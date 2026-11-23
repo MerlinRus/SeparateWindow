@@ -1,1 +1,1 @@
-Moved the RU/EN language switch to the popup header to free up space for the main actions.
+Simplified the popup by removing the “Forget selection for this page” button. Use the site checkbox to turn Auto PiP on or off.

@@ -230,12 +230,6 @@ async function handleTab(tabId, message, sender) {
       if (state) return restore(tabId);
       return tell(tabId, 'select');
     case 'restore': return restore(tabId);
-    case 'forget':
-      if (!tab.incognito && supported(tab.url)) {
-        const pageKey = selectionKey(pageAddress(tab.url));
-        await inPreferenceOrder(pageKey, () => chrome.storage.local.remove(pageKey));
-      }
-      return tell(tabId, 'forget');
     case 'detach':
       if (!sender.tab) throw new Error(t('selectFirst'));
       return detach(tab, message, sender.url || tab.url);

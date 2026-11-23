@@ -43,6 +43,9 @@ def main():
                 centers = [box['y'] + box['height'] / 2 for box in (title, languages, version)]
                 assert max(centers) - min(centers) <= 2, centers
                 assert page.get_by_text(messages['languageLabel']['message'], exact=True).count() == 0
+                assert page.locator('#forget').count() == 0, 'The popup must not contain the old selection reset button'
+                assert page.locator('#auto-pip').get_attribute('type') == 'checkbox'
+                assert page.locator('#auto-pip-option span').text_content() == messages['autoPipLabel']['message']
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                 height=page.locator('body').bounding_box()['height']
                 assert height<=600, f'{lang} popup exceeds Chrome height: {height}'
