@@ -204,6 +204,32 @@ def test_vk_layout(page, worker):
     print('PASS: VK player resizes its layout with the window and keeps the timeline aligned')
 
 
+def test_dailymotion_overlay(page, worker):
+    url = 'https://geo.dailymotion.com/player/sw-test.html'
+    html = '''<!doctype html><style>
+      body { margin: 0; }
+      main { position: relative; width: 960px; height: 540px; }
+      .video_player, video, .vod_click { position: absolute; inset: 0; width: 100%; height: 100%; }
+      button { position: absolute; bottom: 8px; left: 8px; }
+      </style><aside>Outside</aside><main data-testid="player">
+        <div class="player video_player"><div class="video_view"><video></video></div></div>
+        <div class="vod_click"></div><button onclick="this.textContent='Paused'">Pause</button>
+      </main>'''
+    page.route(url, lambda route: route.fulfill(content_type='text/html', body=html))
+    page.set_viewport_size({'width': 1280, 'height': 800})
+    page.goto(url)
+    worker.evaluate('''async url => {const [tab] = await chrome.tabs.query({url}); await tell(tab.id, 'select')}''', url)
+    page.mouse.click(300, 150)
+    page.wait_for_function('''document.querySelector('main').getAttributeNames().some(key => key.endsWith('-target'))''', timeout=3500)
+    page.set_viewport_size({'width': 640, 'height': 360})
+    assert page.locator('main').evaluate('element => element.clientWidth') == 640
+    page.get_by_role('button', name='Pause').click()
+    assert page.get_by_role('button', name='Paused').is_visible()
+    worker.evaluate('''async url => {const [tab] = await chrome.tabs.query({url}); await restore(tab.id)}''', url)
+    assert page.locator('aside').is_visible()
+    print('PASS: clicking the Dailymotion video overlay keeps the whole player and its controls')
+
+
 def main():
     with ThreadingHTTPServer(('127.0.0.1', 0), PlayerHandler) as server:
         threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -277,6 +303,7 @@ def main():
                     test_embedded_player(page, worker, url.replace('/twitch-layout', '/embedded'))
                     test_rutube_settings(page, worker)
                     test_vk_layout(page, worker)
+                    test_dailymotion_overlay(page, worker)
                 finally:
                     context.close()
         finally:

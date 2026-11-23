@@ -42,6 +42,9 @@
   const rutubeSettingsLayer = '[data-floating-ui-portal]:has(#raichuSettingsPanel)';
   const layoutPlayers = [youtubePlayerSelector, twitchPlayerSelector, 'vk-video-player'];
   if (location.hostname === 'player.vimeo.com') layoutPlayers.push('#player');
+  if (location.hostname === 'dailymotion.com' || location.hostname.endsWith('.dailymotion.com')) {
+    layoutPlayers.push('main:has(> .player.video_player)');
+  }
   if (rutubePage) {
     layoutPlayers.push(rutubePlayerSelector, '[class*="touch-handlers-layout-module__layout___"]');
   }
@@ -382,10 +385,22 @@
     renderPinButton();
   }
 
-  async function cropBlockPreview(preview, element) {
-    const target = await CropTarget.fromElement(element);
+  async function withCropTimeout(operation) {
+    let timeout;
+    try {
+      return await Promise.race([
+        operation,
+        new Promise((_, reject) => {
+          timeout = setTimeout(() => reject(new DOMException('Preview crop timed out', 'TimeoutError')), 5000);
+        })
+      ]);
+    } finally {clearTimeout(timeout);}
+  }
+
+  async function cropBlockPreview(preview, element, target) {
+    target ??= await withCropTimeout(CropTarget.fromElement(element));
     if (blockPreview !== preview || selected !== element) return false;
-    await preview.track.cropTo(target);
+    await withCropTimeout(preview.track.cropTo(target));
     return blockPreview === preview && selected === element;
   }
 
@@ -460,6 +475,20 @@
     const savedSize = !blockPreviewRequestSize && !chrome.extension.inIncognitoContext
       ? chrome.storage.local.get('pipPreviewSize').then(settings => settings.pipPreviewSize).catch(() => undefined)
       : undefined;
+    const element = selected;
+    let target;
+    try {
+      target = await withCropTimeout(CropTarget.fromElement(element));
+    } catch {
+      if (blockPreview !== preview) return;
+      closeBlockPreview(preview);
+      throw new Error(t('pinPreviewCropTimeout'));
+    }
+    if (blockPreview !== preview) return;
+    if (selected !== element || !navigator.userActivation.isActive) {
+      closeBlockPreview(preview);
+      throw new Error(t('pinPreviewError'));
+    }
     let stream;
     notify(t('pinChooseTab'));
     try {
@@ -482,14 +511,14 @@
     try {
       if (track?.getSettings().displaySurface !== 'browser' || !track.cropTo) throw new Error();
       // Chrome accepts this element as the crop target only for capture of its own tab.
-      let cropped = await cropBlockPreview(preview, selected);
+      let cropped = await cropBlockPreview(preview, selected, selected === element ? target : undefined);
       if (!cropped && blockPreview === preview) cropped = await cropBlockPreview(preview, selected);
       if (!cropped || track.readyState !== 'live') throw new Error();
       preview.cropped = true;
-    } catch {
+    } catch (error) {
       if (blockPreview !== preview) return;
       closeBlockPreview(preview);
-      throw new Error(t('pinWrongTab'));
+      throw new Error(t(error?.name === 'TimeoutError' ? 'pinPreviewCropTimeout' : 'pinWrongTab'));
     }
     if (blockPreview !== preview) return;
     track.addEventListener('ended', () => closeBlockPreview(preview), {once: true});

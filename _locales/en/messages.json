@@ -230,6 +230,9 @@
   "pinWrongTab": {
     "message": "Choose the tab that contains the selected element."
   },
+  "pinPreviewCropTimeout": {
+    "message": "Chrome couldn’t prepare the preview area. Try pinning the element again."
+  },
   "pinPreviewError": {
     "message": "Couldn’t open the live preview. Try pinning the element again."
   },

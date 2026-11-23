@@ -1,1 +1,1 @@
-Fixed VK Video player scaling and reopening saved Twitch selections from block links.
+Fixed Dailymotion player selection. Block previews now prepare the region before starting tab capture and time out if cropping stalls.

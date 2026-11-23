@@ -230,6 +230,48 @@ def test_widget_preview(page, worker, video_frame, node_with, button, labels, se
     page.wait_for_function('!documentPictureInPicture.window')
     print('PASS: widget preview negotiates 120 fps, updates live and stops capture on close or restore', flush=True)
     print('PASS: document PiP reopens at the last bounds and uses the saved size on a fresh page', flush=True)
+
+    for stage, expected_state in (('target', 'not requested'), ('track', 'ended')):
+        page.reload()
+        detach_widget()
+        worker.evaluate('''async ([url,stage]) => {
+          const [tab] = await chrome.tabs.query({url});
+          await chrome.scripting.executeScript({target:{tabId:tab.id},args:[stage],func:(stage)=>{
+            const media=navigator.mediaDevices, capture=media.getDisplayMedia.bind(media);
+            const neverReady=()=>new Promise(()=>{});
+            if (stage==='target') CropTarget.fromElement=neverReady;
+            globalThis.cropCaptureRequested=false;
+            media.getDisplayMedia=async options=>{
+              globalThis.cropCaptureRequested=true;
+              const stream=await capture(options);
+              const [track]=stream.getVideoTracks();
+              globalThis.stalledCropTrack=track;
+              if (stage==='track') track.cropTo=neverReady;
+              return stream;
+            };
+          }});
+        }''', [page.url, stage])
+        button('pinTitle')
+        for _ in range(75):
+            if labels['pinPreviewCropTimeout'] in json.dumps(node_with('role','status'), ensure_ascii=False):
+                break
+            page.wait_for_timeout(100)
+        else:
+            raise AssertionError(f'No timeout message for the stalled {stage}')
+        state = worker.evaluate('''async url => {
+          const [tab] = await chrome.tabs.query({url});
+          const [sample] = await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>
+            !globalThis.cropCaptureRequested ? 'not requested' : globalThis.stalledCropTrack?.readyState || 'starting'
+          });
+          return sample.result;
+        }''', page.url)
+        assert state == expected_state, (stage, state)
+        assert node_with('aria-label',labels['pinTitle'])
+        assert not page.evaluate('!!documentPictureInPicture.window')
+        restore_widget()
+        print(f'PASS: stalled {stage} restores the button with tab capture {state}', flush=True)
+
+
 def main():
     system_chrome = '--chrome' in sys.argv
     server = ThreadingHTTPServer(('127.0.0.1', 0), PipHandler)
@@ -262,7 +304,7 @@ def main():
                 test_auto_pip_callback(page, worker)
                 if '--auto-only' in sys.argv:
                     return
-                labels = worker.evaluate("Object.fromEntries(['pinTitle','unpinTitle','pinPreviewContinueTitle','pipBlocked','pipNoVideo','showPlayer','onlyVideo','zoomOut'].map(k=>[k,chrome.i18n.getMessage(k)]))")
+                labels = worker.evaluate("Object.fromEntries(['pinTitle','unpinTitle','pinPreviewContinueTitle','pinPreviewCropTimeout','pipBlocked','pipNoVideo','showPlayer','onlyVideo','zoomOut'].map(k=>[k,chrome.i18n.getMessage(k)]))")
                 page.goto(url)
                 video_frame = next(frame for frame in page.frames if frame.url.endswith('/video'))
                 video_frame.wait_for_function('document.querySelector("video").readyState>=2')
