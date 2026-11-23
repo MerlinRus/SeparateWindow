@@ -1,1 +1,1 @@
-Updated the “Keep video on top” switch and added an explanation of when the video opens automatically.
+Added a smooth thumb and track animation to the “Keep video on top” switch.
