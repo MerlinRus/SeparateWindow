@@ -140,12 +140,23 @@ def exercise(page, worker, context):
         page.locator('#tour-next').click()
 
     assert page.locator('#tour-complete').is_visible()
+    page.locator('#tour-complete-back').press('Enter')
+    assert page.locator('#practice-game').is_visible()
+    assert page.locator('.game-tile').first.get_attribute('data-open') is not None
+    page.locator('#tour-next').click()
     page.reload()
     assert page.locator('#tour-complete').is_visible()
+    for example in ('game', 'chart', 'video'):
+        page.locator('#tour-complete-back' if example == 'game' else '#tour-back').click()
+        assert page.locator('#practice-' + example).is_visible()
+        assert page.locator('#tour-status[data-kind=success]').is_visible()
+    assert page.locator('#tour-back').is_hidden()
+    for _ in range(3):
+        page.locator('#tour-next').click()
     page.locator('#tour-restart').click()
     assert page.locator('#practice-video').is_visible()
     assert page.locator('#tour-next').is_hidden()
-    print('PASS: real video playback and PiP, chart zoom, interactive Minesweeper, return and progression')
+    print('PASS: real video playback and PiP, chart zoom, Minesweeper, and back navigation with progress retained')
 
 
 def main():
@@ -173,8 +184,15 @@ def main():
                 english.locator('html[lang=en]').wait_for(state='attached', timeout=8000)
                 english.set_viewport_size({'width': 390, 'height': 844})
                 assert english.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                assert english.get_by_role('button', name='Back', exact=True).count() == 0
                 english.locator('#tour-skip').click()
                 assert english.locator('#practice-chart').is_visible()
+                english.get_by_role('button', name='Back', exact=True).click()
+                assert english.locator('#practice-video').is_visible()
+                english.evaluate("""sessionStorage.setItem('separate-window-tour', JSON.stringify({step: 1, practiced: true}))""")
+                english.reload()
+                assert english.locator('#practice-chart').is_visible()
+                assert english.locator('#tour-next').is_visible()
                 print('PASS: automatic local invite, opt-out, voluntary replay in English and mobile layout')
             finally:
                 context.close()

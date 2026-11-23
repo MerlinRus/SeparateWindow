@@ -10,23 +10,30 @@ const instruction = document.querySelector('#tour-instruction');
 const returnHint = document.querySelector('#tour-return-hint');
 const status = document.querySelector('#tour-status');
 const install = document.querySelector('#tour-install');
+const back = document.querySelector('#tour-back');
 const next = document.querySelector('#tour-next');
 const skip = document.querySelector('#tour-skip');
 const video = document.querySelector('#practice-video');
 
 let step = 0;
-let practiced = false;
+const completed = new Set();
 let wrongBlock = false;
 try {
   const saved = JSON.parse(sessionStorage.getItem(progressKey));
   if (Number.isInteger(saved?.step) && saved.step >= 0 && saved.step <= examples.length) {
     step = saved.step;
-    practiced = saved.practiced === true;
+    if (Array.isArray(saved.completed)) {
+      for (const example of examples) {
+        if (saved.completed.includes(example)) completed.add(example);
+      }
+    } else if (saved.practiced === true && examples[step]) {
+      completed.add(examples[step]);
+    }
   }
 } catch {}
 
 function saveProgress() {
-  try { sessionStorage.setItem(progressKey, JSON.stringify({step, practiced})); } catch {}
+  try { sessionStorage.setItem(progressKey, JSON.stringify({step, completed: [...completed]})); } catch {}
 }
 
 function render() {
@@ -47,18 +54,20 @@ function render() {
   const videoStep = active === 'video';
   videoStart.hidden = !videoStep;
   returnHint.hidden = !videoStep;
+  const practiced = completed.has(active);
   status.hidden = !practiced && !wrongBlock;
   status.textContent = practiced ? copy.returned : wrongBlock ? copy.wrongBlock : '';
   status.dataset.kind = practiced ? 'success' : 'retry';
   install.hidden = document.documentElement.hasAttribute(stateAttr);
+  back.hidden = step === 0;
   next.hidden = !practiced;
   skip.hidden = practiced;
 }
 
 function goTo(index) {
+  if (index < 0 || index > examples.length) return;
   if (index !== 0) video.pause();
   step = index;
-  practiced = false;
   wrongBlock = false;
   saveProgress();
   render();
@@ -67,18 +76,23 @@ function goTo(index) {
 
 next.addEventListener('click', () => goTo(step + 1));
 skip.addEventListener('click', () => goTo(step + 1));
+for (const button of document.querySelectorAll('#tour-back, #tour-complete-back')) {
+  button.addEventListener('click', () => goTo(step - 1));
+}
 document.querySelector('#tour-restart').addEventListener('click', () => {
+  completed.clear();
   resetGame();
   goTo(0);
 });
 
 function updateFromExtension() {
   const state = document.documentElement.getAttribute(stateAttr);
-  if (state?.startsWith('returned:') && step < examples.length) {
-    if (state === 'returned:' + examples[step]) {
-      practiced = true;
+  const active = examples[step];
+  if (active && state?.startsWith('returned:')) {
+    if (state === 'returned:' + active) {
+      completed.add(active);
       saveProgress();
-    } else if (!practiced) wrongBlock = true;
+    } else if (!completed.has(active)) wrongBlock = true;
   }
   render();
 }

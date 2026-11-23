@@ -44,6 +44,7 @@
         <p id="tour-status" class="tour-status" role="status" hidden></p>
         <a id="tour-install" class="tour-text-button" href="$store">$install</a>
         <div class="tour-actions">
+          <button type="button" id="tour-back" class="tour-secondary" hidden>$back</button>
           <button type="button" id="tour-next" class="tour-primary" hidden>$next</button>
           <button type="button" id="tour-skip" class="tour-primary">$skip_step</button>
         </div>
@@ -85,8 +86,11 @@
         <li>$complete_pin</li>
         <li>$complete_select</li>
       </ul>
-      <button id="tour-restart" class="tour-primary" type="button">$restart</button>
-      <a class="tour-text-button" href="$home">$home_label</a>
+      <div class="tour-actions">
+        <button type="button" id="tour-complete-back" class="tour-secondary">$back</button>
+        <button type="button" id="tour-restart" class="tour-primary">$restart</button>
+        <a class="tour-text-button" href="$home">$home_label</a>
+      </div>
     </section>
     <noscript><p>$requires_js</p></noscript>
   </main>
