@@ -1,1 +1,1 @@
-Cards and widgets keep their original background color in a separate window, so text stays readable on light pages.
+Fixed VK Video player scaling and reopening saved Twitch selections from block links.

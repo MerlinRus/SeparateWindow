@@ -2,6 +2,10 @@
   const t = (key, substitutions) => SWI18n.t(key, substitutions);
   if (globalThis.__separateWindowLocal) return;
   globalThis.__separateWindowLocal = true;
+  const initialUrl = location.href;
+  const documentReady = document.readyState === 'loading'
+    ? new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, {once: true}))
+    : Promise.resolve();
   const roots = new Set();
   SWI18n.onChange(old => {
     for (const root of roots) {
@@ -36,14 +40,14 @@
   const rutubePage = location.hostname === 'rutube.ru' || location.hostname.endsWith('.rutube.ru');
   const rutubePlayerSelector = 'section.video-player';
   const rutubeSettingsLayer = '[data-floating-ui-portal]:has(#raichuSettingsPanel)';
-  const layoutPlayers = [youtubePlayerSelector, twitchPlayerSelector];
+  const layoutPlayers = [youtubePlayerSelector, twitchPlayerSelector, 'vk-video-player'];
   if (location.hostname === 'player.vimeo.com') layoutPlayers.push('#player');
   if (rutubePage) {
     layoutPlayers.push(rutubePlayerSelector, '[class*="touch-handlers-layout-module__layout___"]');
   }
   const layoutPlayerSelector = layoutPlayers.join(',');
   const playerContainers = [
-    ...layoutPlayers, '#movie_player', '.html5-video-player', 'vk-video-player', '.vp-player',
+    ...layoutPlayers, '#movie_player', '.html5-video-player', '.vp-player',
     '.video-player', '.dmp_Player', '.video-js', '.jwplayer', '.plyr--video',
     '.shaka-video-container', 'media-player', 'mux-player'
   ];
@@ -755,7 +759,8 @@
     if (sender.id !== chrome.runtime.id) return;
     switch (message.type) {
       case 'select':
-        SWI18n.ready.then(startPicker).then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
+        Promise.all([SWI18n.ready, documentReady]).then(startPicker)
+          .then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
         return true;
       case 'uncrop': unCrop(false); break;
       case 'auto-pip-refresh':
@@ -774,19 +779,22 @@
     clearTimeout(selectionTimer);
   }
 
-  async function init() {
+  async function init(requestedUrl) {
     stopPendingSelection();
     const generation = selectionGeneration;
+    const request = new URL(requestedUrl);
+    const linkHash = request.hash.startsWith('#__sw_local=') ? request.hash : '';
     const context = await send('window-state');
     if (generation !== selectionGeneration || selected || picker) return;
+    if (linkHash && (request.origin !== location.origin || request.pathname !== location.pathname || request.search !== location.search)) return;
     detached = context.detached;
     let automatic = false;
-    if (location.hash.startsWith('#__sw_local=')) {
+    if (linkHash) {
       try {
-        const data = JSON.parse(decodeURIComponent(location.hash.slice(12)));
+        const data = JSON.parse(decodeURIComponent(linkHash.slice(12)));
         if (typeof data.selector !== 'string' || data.selector.length > 12000 || typeof data.hash !== 'string' || (data.hash && !data.hash.startsWith('#'))) throw new Error(t('invalidBlockLink'));
         savedSelector = data.selector; automatic = true;
-        history.replaceState(history.state, '', location.pathname + location.search + data.hash);
+        if (location.hash === linkHash) history.replaceState(history.state, '', location.pathname + location.search + data.hash);
       } catch (error) {notify(t('linkError', error.message)); return;}
     } else if (!context.incognito) {
       const key = `selection:${location.href}`;
@@ -817,8 +825,11 @@
       }
     }, 15000);
   }
-  window.addEventListener('hashchange', () => {
-    if (!selected && location.hash.startsWith('#__sw_local=')) init().catch(error => notify(error.message));
+  // A site's router can clear the link hash before we read the current address.
+  const ready = documentReady.then(() => SWI18n.ready);
+  window.addEventListener('hashchange', event => {
+    if (!event.isTrusted || selected || !new URL(event.newURL).hash.startsWith('#__sw_local=')) return;
+    ready.then(() => init(event.newURL)).catch(error => notify(error.message));
   });
-  SWI18n.ready.then(init).catch(error => notify(error.message));
+  ready.then(() => {if (!selectionGeneration) return init(initialUrl);}).catch(error => notify(error.message));
 })();

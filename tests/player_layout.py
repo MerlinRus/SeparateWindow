@@ -166,6 +166,44 @@ def test_rutube_settings(page, worker):
     print('PASS: embedded RUTUBE settings and quality remain interactive, unrelated portals stay hidden')
 
 
+def test_vk_layout(page, worker):
+    url = 'https://vkvideo.ru/sw-test-layout/'
+    html = '''<!doctype html><style>
+      body { margin: 0; }
+      vk-video-player { display: block; position: relative; width: 1427px; height: 807px; }
+      video { width: 100%; height: 100%; }
+      #seek { position: absolute; inset: auto 0 0; height: 24px; background: grey; }
+      </style><vk-video-player><video></video><div id="seek"></div></vk-video-player>
+      <script>
+        const seek = document.querySelector('#seek');
+        seek.onclick = event => {
+          const rect = seek.getBoundingClientRect();
+          seek.dataset.position = Math.round((event.clientX - rect.left) / seek.clientWidth * 100);
+        };
+      </script>'''
+    page.route(url, lambda route: route.fulfill(content_type='text/html', body=html))
+    page.set_viewport_size({'width': 1440, 'height': 900})
+    page.goto(url)
+    worker.evaluate('''async url => {const [tab] = await chrome.tabs.query({url}); await tell(tab.id, 'select')}''', url)
+    page.mouse.click(260, 140)
+    player = page.locator('vk-video-player')
+    page.wait_for_function('document.querySelector("vk-video-player").getAttributeNames().some(key => key.endsWith("-target"))')
+    timeline = page.locator('#seek')
+    for width, height in ((640, 360), (1210, 540), (900, 670)):
+        page.set_viewport_size({'width': width, 'height': height})
+        size = player.evaluate('''element => {
+            const rect = element.getBoundingClientRect();
+            return [element.clientWidth, element.clientHeight, rect.width, rect.height];
+        }''')
+        assert all(abs(a - b) <= 1 for a, b in zip(size[:2], size[2:])), size
+        assert page.evaluate('[document.documentElement.scrollWidth, document.documentElement.scrollHeight]') == [width, height]
+        timeline.click(position={'x': size[0] * .7, 'y': 8})
+        assert abs(int(timeline.get_attribute('data-position')) - 70) <= 1
+    worker.evaluate('''async url => {const [tab] = await chrome.tabs.query({url}); await restore(tab.id)}''', url)
+    assert player.evaluate('element => element.clientWidth') == 1427
+    print('PASS: VK player resizes its layout with the window and keeps the timeline aligned')
+
+
 def main():
     with ThreadingHTTPServer(('127.0.0.1', 0), PlayerHandler) as server:
         threading.Thread(target=server.serve_forever, daemon=True).start()
@@ -238,6 +276,7 @@ def main():
                     print('PASS: Twitch layout, controls, settings portal, quality selection, fullscreen and live restore')
                     test_embedded_player(page, worker, url.replace('/twitch-layout', '/embedded'))
                     test_rutube_settings(page, worker)
+                    test_vk_layout(page, worker)
                 finally:
                     context.close()
         finally:

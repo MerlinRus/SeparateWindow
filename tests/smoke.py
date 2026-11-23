@@ -5,6 +5,7 @@ from pathlib import Path
 import tempfile
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import quote
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +51,17 @@ class Handler(BaseHTTPRequestHandler):
               </script>''')
         else:
             self.wfile.write(FIXTURE)
+            if self.path == '/canonicalized':
+                self.wfile.write(b'''<script>
+                    window.canonicalizationCount = 0;
+                    function canonicalize() {
+                      if (!location.hash.startsWith('#__sw_local=')) return;
+                      window.canonicalizationCount++;
+                      history.replaceState(history.state, '', location.pathname);
+                    }
+                    window.addEventListener('hashchange', canonicalize);
+                    canonicalize();
+                </script>''')
 
     def log_message(self, *args):
         pass
@@ -421,6 +433,19 @@ def main():
             assert page.evaluate('window.identity') == identity
             assert not state()['session']
             print('PASS: unrelated navigation shows the full page, and moving the tab back manually restores live content')
+
+            canonical_url = url + 'canonicalized'
+            canonical_link = canonical_url + '#__sw_local=' + quote(json.dumps({'selector': '#widget', 'hash': ''}))
+            for mode in ('same document', 'new document'):
+                page.goto(canonical_url if mode == 'same document' else url)
+                page.goto(canonical_link, wait_until='domcontentloaded')
+                page.wait_for_function('window.canonicalizationCount === 1')
+                assert page.url == canonical_url
+                page.locator('header').wait_for(state='hidden', timeout=4000)
+                assert page.locator('#widget').is_visible()
+                command('restore')
+                page.locator('header').wait_for(state='visible')
+                print(f'PASS: link opens the block after the site removes the hash ({mode})')
             page.screenshot(path=str(ROOT / 'tests' / 'verified-page.png'))
             print('ALL SMOKE CHECKS PASSED')
         except Exception:

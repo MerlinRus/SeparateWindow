@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Separate Window",
-  "version": "1.4.17",
+  "version": "1.4.18",
   "description": "__MSG_extensionDescription__",
   "default_locale": "ru",
   "author": "Mycelium",
@@ -59,7 +59,7 @@
         "i18n.js",
         "content.js"
       ],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ]
 }
