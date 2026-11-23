@@ -50,6 +50,9 @@ case ${1:-} in
         tar -xf "$2" --no-same-owner -C "$release"
         test -s "$release/public/index.html"
         test -s "$release/public/en/index.html"
+        test -s "$release/public/onboarding/index.html"
+        test -s "$release/public/en/onboarding/index.html"
+        test -s "$release/public/assets/onboarding-loop.mp4"
         previous=$(readlink "$site/current" || true)
         ln -s -- "$release" "$site/.next"
         mv -Tf -- "$site/.next" "$site/current"

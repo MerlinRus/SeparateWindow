@@ -51,7 +51,16 @@
     </section>
     <div class="shortcut"><span data-i18n="quickAccess">Быстрый вызов</span><button type="button" id="shortcut-keys">Настроить клавиши</button></div>
   </main>
-  <footer><span>Mycelium</span><nav><a id="rate" href="https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm/reviews" target="_blank" rel="noopener noreferrer" data-i18n="rateLink">Оценить нас</a><a href="https://github.com/MerlinRus/SeparateWindow#readme" target="_blank" rel="noopener noreferrer" data-i18n="helpLink">Помощь</a><a href="https://merlinrus.github.io/SeparateWindow/privacy.html" target="_blank" rel="noopener noreferrer" data-i18n="privacyLink">Конфиденциальность</a></nav></footer>
-  <script src="i18n.js"></script><script src="popup.js"></script>
+  <footer><span>Mycelium</span><nav><a id="rate" href="https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm/reviews" target="_blank" rel="noopener noreferrer" data-i18n="rateLink">Оценить нас</a><button type="button" data-onboarding-choice="replay" data-onboarding-copy="onboardingLink">Обучение</button><a href="https://github.com/MerlinRus/SeparateWindow#readme" target="_blank" rel="noopener noreferrer" data-i18n="helpLink">Помощь</a><a href="https://merlinrus.github.io/SeparateWindow/privacy.html" target="_blank" rel="noopener noreferrer" data-i18n="privacyLink">Конфиденциальность</a></nav></footer>
+  <dialog id="onboarding-invite" class="onboarding-invite" aria-labelledby="onboarding-title" aria-describedby="onboarding-description">
+    <h2 id="onboarding-title" data-onboarding-copy="onboardingTitle">Попробуем Separate Window?</h2>
+    <p id="onboarding-description" data-onboarding-copy="onboardingDescription">Откройте видео, график и мини-игру в отдельных окнах. Можно пропустить и вернуться к обучению позже.</p>
+    <div class="onboarding-actions">
+      <button type="button" class="secondary" data-onboarding-choice="skip" data-onboarding-copy="onboardingSkip">Пропустить</button>
+      <button type="button" class="primary" data-onboarding-choice="start" data-onboarding-copy="onboardingStart">Начать обучение</button>
+    </div>
+    <p class="onboarding-status" role="status"></p>
+  </dialog>
+  <script src="i18n.js"></script><script src="popup.js"></script><script src="invitation.js"></script>
 </body>
 </html>

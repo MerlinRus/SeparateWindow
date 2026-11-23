@@ -31,7 +31,7 @@ function worker({incognito = false} = {}) {
     storage: {session, local},
     runtime: {id: 'test', getURL: (name = '') => extension + name, onMessage: signal(), onInstalled: signal()},
     commands: {onCommand: signal()},
-    contextMenus: {onClicked: signal()},
+    contextMenus: {onClicked: signal(), removeAll: callback => callback(), create() {}},
     scripting: {executeScript: async () => []},
     tabs: {
       onUpdated: signal(), onAttached: signal(), onRemoved: signal(),
@@ -131,6 +131,23 @@ function worker({incognito = false} = {}) {
     await assert.rejects(run.send('capture'), /activePageRequired/);
   }
   {
+    const run = worker();
+    await run.chrome.runtime.onInstalled.listener({reason: 'update'});
+    assert.equal(run.tabs.size, 1, 'Updates never show the welcome page');
+    await run.chrome.runtime.onInstalled.listener({reason: 'install'});
+    await run.chrome.runtime.onInstalled.listener({reason: 'install'});
+    assert.equal(run.tabs.size, 2, 'Fresh install only opens one welcome tab');
+    assert.equal(run.tabs.get(2).url, extension + 'welcome.html');
+    assert.equal(run.local.records.onboarding, 'pending');
+    await assert.rejects(run.send('onboarding', {choice: 'start'}), /commandFailed/);
+    await run.popupCommand('onboarding', {choice: 'skip'});
+    await run.popupCommand('onboarding', {choice: 'start'});
+    assert.equal(run.local.records.onboarding, 'skipped');
+    assert.equal(run.tabs.size, 2, 'A stale first-run prompt cannot open the tour after opt-out');
+    await run.popupCommand('onboarding', {choice: 'replay'});
+    assert.equal(run.tabs.get(3).url, 'https://separate.maark.ru/en/onboarding/');
+  }
+  {
     const run = worker(), origin = new URL(url).origin;
     const savedSelection = {selector: '#video', bounds: {left: 30, top: 40, width: 600, height: 400}};
     await run.local.set({[`selection:${url}`]: savedSelection});
@@ -151,5 +168,5 @@ function worker({incognito = false} = {}) {
     assert.equal((await privateRun.popupCommand('auto-pip', {enabled: true})).available, false);
     assert.equal(privateRun.writes.length, 0);
   }
-  console.log('PASS: private storage, quota, failed moves, immediate close, context menu, reused placeholder, capture tab switch and site-scoped Auto PiP');
+  console.log('PASS: private storage, quota, failed moves, immediate close, context menu, reused placeholder, capture tab switch, Auto PiP and onboarding lifecycle');
 })().catch(error => {console.error(error); process.exitCode = 1;});

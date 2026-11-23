@@ -4,11 +4,13 @@
 
 ![Separate Window](icons/icon128.png)
 
-Материалы и инструкция публикации: [docs/store/README.md](docs/store/README.md). Команда `python tools/package.py` собирает `dist/separate-window-1.4.24.zip` для Chrome Web Store и отдельный архив с изображениями и текстами `dist/chrome-web-store-materials-1.4.24.zip`. Результаты проверок плееров: [docs/player-checks.md](docs/player-checks.md).
+Материалы и инструкция публикации: [docs/store/README.md](docs/store/README.md). Команда `python tools/package.py` собирает `dist/separate-window-1.5.0.zip` для Chrome Web Store и отдельный архив с изображениями и текстами `dist/chrome-web-store-materials-1.5.0.zip`. Результаты проверок плееров: [docs/player-checks.md](docs/player-checks.md).
 
 Издатель: **Mycelium**. Поддержка: **qobuz43@gmail.com**. [Сайт Separate Window](https://separate.maark.ru/) · [Политика конфиденциальности](https://separate.maark.ru/privacy.html).
 
 Исходники сайта лежат в `website/`. Команда `python website/build.py` собирает страницы на русском и английском и архив для выкладки. На сервере `sudo bash deploy.sh deploy separate-window-website.tar.gz` активирует новый выпуск в `/opt/separate-window`. Для первой настройки HTTPS используйте `sudo bash deploy.sh https`.
+
+После новой установки можно пройти или пропустить обучение. Ссылка «Обучение» в меню открывает практику с видео, графиком и «Сапёром». `python website/build.py` и `python tests/onboarding.py` проверяют оба языка и реальные действия в Chromium.
 
 Треугольные индикаторы в интерфейсе сайта и расширения запрещены. Для раскрывающихся блоков используйте плюс и минус.
 

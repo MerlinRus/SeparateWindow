@@ -1,1 +1,1 @@
-Open Chrome’s keyboard shortcut settings directly from the extension menu.
+Try the new interactive tutorial. Open a video, a chart, and a Minesweeper game in separate windows, then try zooming or picture-in-picture. Skip the tour or start it any time from the extension menu.

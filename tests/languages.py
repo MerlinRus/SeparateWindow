@@ -19,6 +19,7 @@ def main():
                 worker = context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
                 worker.evaluate('''async () => {
                   await SWI18n.ready;
+                  await chrome.storage.local.set({onboarding:'skipped'});
                   const update=chrome.contextMenus.update.bind(chrome.contextMenus);
                   chrome.contextMenus.update=async (id,options)=>{await update(id,options);globalThis.menuTitle=options.title;};
                 }''')

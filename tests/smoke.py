@@ -81,9 +81,20 @@ def main():
         try:
             print('Chromium launched; waiting for MV3 worker...', flush=True)
             worker = context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
+            worker.evaluate('''async () => {
+              const url = chrome.runtime.getURL('welcome.html');
+              for (let attempt = 0; attempt < 100; attempt++) {
+                const [welcome] = await chrome.tabs.query({url});
+                if (welcome) {await chrome.tabs.remove(welcome.id); return;}
+                await new Promise(resolve => setTimeout(resolve, 25));
+              }
+              throw new Error('The fresh install welcome tab did not open');
+            }''')
             ru = json.loads((ROOT / '_locales/ru/messages.json').read_text(encoding='utf-8'))
-            translated_labels = worker.evaluate('''async ru => Object.fromEntries(
-              Object.entries(ru).map(([key,value])=>[value.message,chrome.i18n.getMessage(key)]))''', ru)
+            translated_labels = worker.evaluate('''async ru => {
+              await SWI18n.ready;
+              return Object.fromEntries(Object.entries(ru).map(([key, value]) => [value.message, t(key)]));
+            }''', ru)
             errors = []
             worker.on('console', lambda msg: errors.append(msg.text) if msg.type == 'error' else None)
             page = context.pages[0]

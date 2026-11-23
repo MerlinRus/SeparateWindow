@@ -1,4 +1,4 @@
-"""Build the static Russian and English Separate Window landing pages."""
+"""Build the static Russian and English landing pages and tutorial."""
 
 import json
 import re
@@ -31,8 +31,12 @@ def write(path, content):
 def main():
     template = Template((SOURCE / 'index.html').read_text(encoding='utf-8'))
     copy = json.loads((SOURCE / 'copy.json').read_text(encoding='utf-8'))
+    tour = Template((SOURCE / 'onboarding.html').read_text(encoding='utf-8'))
+    tour_copy = json.loads((SOURCE / 'onboarding-copy.json').read_text(encoding='utf-8'))
     style_version = sha256((SOURCE / 'site.css').read_bytes()).hexdigest()[:12]
     script_version = sha256((SOURCE / 'site.js').read_bytes()).hexdigest()[:12]
+    tour_style_version = sha256((SOURCE / 'onboarding.css').read_bytes()).hexdigest()[:12]
+    tour_script_version = sha256((SOURCE / 'onboarding.js').read_bytes()).hexdigest()[:12]
     for lang, path in ROUTES.items():
         variables = {key: escape(value, quote=True) for key, value in copy[lang].items()}
         messages = json.loads((ROOT / '_locales' / lang / 'messages.json').read_text(encoding='utf-8'))
@@ -50,6 +54,13 @@ def main():
             current_en=current if lang == 'en' else '',
         )
         write(path.lstrip('/') + 'index.html', page)
+        lesson = tour.substitute(
+            {key: escape(value, quote=True) for key, value in tour_copy[lang].items()},
+            lang=lang, home=path, store=STORE, style_version=style_version,
+            tour_style_version=tour_style_version, tour_script_version=tour_script_version,
+            current_ru=current if lang == 'ru' else '', current_en=current if lang == 'en' else '',
+        )
+        write(path.lstrip('/') + 'onboarding/index.html', lesson)
     missing = Template((SOURCE / '404.html').read_text(encoding='utf-8'))
     write('404.html', missing.substitute(style_version=style_version))
     write('robots.txt', f'User-agent: *\nAllow: /\nSitemap: {HOST}/sitemap.xml\n')
@@ -73,7 +84,7 @@ def main():
     copyfile(ROOT / 'icons' / 'favicon.ico', OUTPUT / 'favicon.ico')
     copyfile(ROOT / 'icons' / 'icon128.png', assets / 'icon.png')
     copyfile(promo, assets / 'share.png')
-    for filename in ('site.css', 'site.js'):
+    for filename in ('site.css', 'site.js', 'onboarding.css', 'onboarding.js', 'onboarding-loop.mp4'):
         copyfile(SOURCE / filename, assets / filename)
     with Image.open(promo) as artwork:
         artwork.crop((880, 180, 1336, 437)).convert('RGB').save(assets / 'landscape.webp', quality=88)

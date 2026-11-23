@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Separate Window</title>
+  <link rel="icon" href="icons/favicon.ico">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="welcome">
+  <main class="onboarding-invite">
+    <img src="icons/app64.png" width="48" height="48" alt="">
+    <h1 data-onboarding-copy="onboardingTitle">Попробуем Separate Window?</h1>
+    <p data-onboarding-copy="onboardingDescription">Откройте видео, график и мини-игру в отдельных окнах. Можно пропустить и вернуться к обучению позже.</p>
+    <div class="onboarding-actions">
+      <button type="button" class="secondary" data-onboarding-choice="skip" data-onboarding-copy="onboardingSkip">Пропустить</button>
+      <button type="button" class="primary" data-onboarding-choice="start" data-onboarding-copy="onboardingStart">Начать обучение</button>
+    </div>
+    <p class="onboarding-status" role="status"></p>
+  </main>
+  <script src="i18n.js"></script><script src="invitation.js"></script>
+</body>
+</html>

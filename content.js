@@ -3,6 +3,10 @@
   if (globalThis.__separateWindowLocal) return;
   globalThis.__separateWindowLocal = true;
   const initialUrl = location.href;
+  const tourPage = location.origin === 'https://separate.maark.ru' &&
+    /^\/(?:en\/)?onboarding\/?$/.test(location.pathname);
+  const tourStateAttr = 'data-separate-window-tour';
+  let tourExample;
   const documentReady = document.readyState === 'loading'
     ? new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, {once: true}))
     : Promise.resolve();
@@ -122,11 +126,15 @@
       .bar:hover,.bar:focus-within{opacity:.75}.bar:focus-within{transition:none}
       .bar button{pointer-events:none}.bar:hover button,.bar:focus-within button{pointer-events:auto}
       .bar button{background:#152031}.bar button:hover{background:#344963}
+      .bar[data-tour-lesson] [data-tour-control=return],
+      .bar[data-tour-lesson=video] [data-tour-control=pin],
+      .bar[data-tour-lesson=chart] [data-tour-control=zoom]{border-color:#9fc5ff}
       @media(prefers-reduced-motion:reduce){.bar{transition:none}}
       .outline{position:fixed;border:3px solid #5089ff;background:#5089ff18;pointer-events:none}
       .shield{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;touch-action:none;outline:none}
       .hint,.notice{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);max-width:90vw;padding:12px 18px;border-radius:8px;background:#101a2b;color:#fff;font:14px/1.5 system-ui;text-align:center;box-shadow:0 3px 15px #0005;pointer-events:auto}
       .hint button{margin-left:12px}.marker{position:fixed;pointer-events:none;opacity:0;background:#2357d9;box-shadow:0 2px 8px #0005}
+      .tour-tip{bottom:54px;pointer-events:none}
       .marker.visible,.marker:focus-visible{opacity:.5;pointer-events:auto}
       dialog{pointer-events:auto;max-width:90vw;width:560px;border:1px solid #526077;border-radius:12px;background:#101a2b;color:#fff;padding:20px;font:14px system-ui}dialog::backdrop{background:#0008}dialog input{width:100%;padding:10px;margin:12px 0;color:#fff;background:#263349;border:1px solid #526077}
     `;
@@ -135,13 +143,14 @@
     return {host, root};
   }
 
-  function notify(text) {
+  function notify(text, tourTip = false) {
     if (!ui) ({host: ui, root: shadow} = makeUI());
     shadow.querySelector('.notice')?.remove();
     const node = document.createElement('div');
     node.className = 'notice'; node.setAttribute('role', 'status'); node.textContent = text;
+    if (tourTip) node.classList.add('tour-tip');
     shadow.append(node); clearTimeout(noticeTimer);
-    noticeTimer = setTimeout(() => {node.remove(); if (!selected && !picker) {ui?.remove(); ui = null;}}, 5000);
+    noticeTimer = setTimeout(() => {node.remove(); if (!selected && !picker) {ui?.remove(); ui = null;}}, tourTip ? 9000 : 5000);
   }
 
   function cssSelector(element) {
@@ -559,7 +568,7 @@
       bar.append(button);
       return button;
     }
-    button(t('returnShort'), t('returnTitle'), () => send('restore'));
+    button(t('returnShort'), t('returnTitle'), () => send('restore')).dataset.tourControl = 'return';
     button(t('onlyVideo'), t('onlyVideo'), async button => {
       const enabled = !cleanVideo;
       await send('clean-media', {selector: `[${targetAttr}]`, frameRoots: mediaFrameRoots(), enabled});
@@ -577,14 +586,15 @@
         await startBlockPreview();
       }
     });
+    pinButton.dataset.tourControl = 'pin';
     setPinState(pipActive);
     button(t('size'), t('sizeTitle'), async button => {
       const result = await send('bounds'); button.textContent = result.saved ? t('sizeSaved') : t('size');
       notify(result.saved ? t('sizeSavedNotice') : t('sizeForgottenNotice'));
     });
-    button('−', t('zoomOut'), () => {scale = Math.max(.1, scale - .1); renderCrop();});
-    button('+', t('zoomIn'), () => {scale = Math.min(5, scale + .1); renderCrop();});
-    button(t('fit'), t('fitTitle'), button => {fit = !fit; scale = 1; button.textContent = fit ? t('fit') : '1:1'; renderCrop();});
+    button('−', t('zoomOut'), () => {scale = Math.max(.1, scale - .1); renderCrop();}).dataset.tourControl = 'zoom';
+    button('+', t('zoomIn'), () => {scale = Math.min(5, scale + .1); renderCrop();}).dataset.tourControl = 'zoom';
+    button(t('fit'), t('fitTitle'), button => {fit = !fit; scale = 1; button.textContent = fit ? t('fit') : '1:1'; renderCrop();}).dataset.tourControl = 'zoom';
     button('↻', t('rotateTitle'), () => {rotation = (rotation + 90) % 360; renderCrop();});
     // Keep page shortcuts away from the link dialog.
     window.addEventListener('keydown', event => {
@@ -693,6 +703,14 @@
     cropObserver.observe(document.documentElement, {childList:true, subtree:true});
     try {
       await send('detach', {selector, width: rect.width, height: rect.height}); detached = true;
+      if (tourPage && selected === element) {
+        const tips = {video: 'tourVideoTip', chart: 'tourChartTip', game: 'tourGameTip'};
+        const example = element.dataset.tourExample;
+        tourExample = Object.hasOwn(tips, example) ? example : 'other';
+        shadow.querySelector('.bar').dataset.tourLesson = tourExample;
+        document.documentElement.setAttribute(tourStateAttr, 'open:' + tourExample);
+        notify(t(tips[tourExample] || 'tourReturnTip'), true);
+      }
     }
     catch (error) {unCrop(); throw error;}
   }
@@ -796,7 +814,13 @@
         refreshAutoPip().then(() => respond({ok: true}), error => respond({ok: false, error: error.message}));
         return true;
       case 'pip-state': setPinState(message.active); break;
-      case 'returned': detached = false; installMarker(savedSelector); break;
+      case 'returned':
+        detached = false; installMarker(savedSelector);
+        if (tourPage && tourExample) {
+          document.documentElement.setAttribute(tourStateAttr, 'returned:' + tourExample);
+          tourExample = undefined;
+        }
+        break;
       default: return;
     }
     respond({ok: true});
@@ -860,5 +884,8 @@
     if (!event.isTrusted || selected || !new URL(event.newURL).hash.startsWith('#__sw_local=')) return;
     ready.then(() => init(event.newURL)).catch(error => notify(error.message));
   });
-  ready.then(() => {if (!selectionGeneration) return init(initialUrl);}).catch(error => notify(error.message));
+  ready.then(() => {
+    if (tourPage) document.documentElement.setAttribute(tourStateAttr, 'ready');
+    if (!selectionGeneration) return init(initialUrl);
+  }).catch(error => notify(error.message));
 })();

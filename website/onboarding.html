@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="$lang">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>$page_title · Separate Window</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/assets/site.css?v=$style_version">
+  <link rel="stylesheet" href="/assets/onboarding.css?v=$tour_style_version">
+  <script src="/assets/onboarding.js?v=$tour_script_version" defer></script>
+</head>
+<body>
+  <header class="shell top">
+    <a class="brand" href="$home"><img src="/assets/icon.png" width="36" height="36" alt="">Separate Window</a>
+    <nav class="languages" aria-label="$language_label">
+      <a href="/onboarding/" hreflang="ru" lang="ru"$current_ru>RU</a>
+      <a href="/en/onboarding/" hreflang="en" lang="en"$current_en>EN</a>
+    </nav>
+  </header>
+
+  <main class="shell tour">
+    <section class="tour-intro" aria-labelledby="tour-title">
+      <h1 id="tour-title">$heading</h1>
+      <p>$intro</p>
+    </section>
+    <div id="tour-workspace" class="tour-workspace">
+      <aside class="tour-guide" aria-labelledby="tour-guide-heading">
+        <ol class="tour-steps" aria-label="$steps_label">
+          <li data-tour-step="video">$video</li>
+          <li data-tour-step="chart">$chart</li>
+          <li data-tour-step="game">$game</li>
+        </ol>
+        <h2 id="tour-guide-heading" tabindex="-1">$video_title</h2>
+        <p id="tour-instruction">$video_tip</p>
+        <p class="tour-picker">$picker_before <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd>.</p>
+        <p id="tour-status" class="tour-status" role="status" hidden></p>
+        <a id="tour-install" class="tour-text-button" href="$store">$install</a>
+        <div class="tour-actions">
+          <button type="button" id="tour-next" class="tour-primary" hidden>$next</button>
+          <button type="button" id="tour-skip" class="tour-text-button">$skip_step</button>
+        </div>
+      </aside>
+      <div class="tour-stage">
+        <section class="tour-scene" data-tour-scene="video" aria-labelledby="video-heading">
+          <div class="scene-header"><h2 id="video-heading">$video_label</h2><span>$video_note</span></div>
+          <video id="practice-video" data-tour-example="video" aria-label="$video_label" controls muted loop playsinline preload="metadata" poster="/assets/landscape.webp">
+            <source src="/assets/onboarding-loop.mp4" type="video/mp4">
+          </video>
+        </section>
+        <section class="tour-scene" data-tour-scene="chart" aria-labelledby="chart-heading" hidden>
+          <div class="scene-header"><h2 id="chart-heading">$chart_label</h2><span>$chart_note</span></div>
+          <div id="practice-chart" class="practice-chart" data-tour-example="chart">
+            <div class="chart-caption"><span>$chart_metric</span><strong>$chart_value</strong></div>
+            <ul class="chart-bars" aria-label="$chart_metric">
+              <li class="bar-1"><span>980</span></li><li class="bar-2"><span>1120</span></li><li class="bar-3"><span>1040</span></li><li class="bar-4"><span>1460</span></li><li class="bar-5"><span>1210</span></li><li class="bar-6"><span>1370</span></li><li class="bar-7"><span>1810</span></li>
+            </ul>
+            <div class="chart-dates"><span>$chart_from</span><span>$chart_to</span></div>
+          </div>
+        </section>
+        <section class="tour-scene" data-tour-scene="game" aria-labelledby="game-heading" hidden>
+          <div class="scene-header"><h2 id="game-heading">$game_label</h2><span>$game_note</span></div>
+          <div id="practice-game" class="practice-game" data-tour-example="game">
+            <div class="game-header">
+              <p id="game-status" role="status">$game_start</p>
+              <button type="button" id="game-reset" class="tour-text-button">$game_reset</button>
+            </div>
+            <div id="game-grid" class="game-grid" role="group" aria-label="$game_label"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+    <section id="tour-complete" class="tour-complete" aria-labelledby="complete-heading" hidden>
+      <h2 id="complete-heading" tabindex="-1">$complete_title</h2>
+      <p>$complete_tip</p>
+      <ul><li>$complete_select</li><li>$complete_return</li><li>$complete_pin</li></ul>
+      <button id="tour-restart" class="tour-primary" type="button">$restart</button>
+      <a class="tour-text-button" href="$home">$home_label</a>
+    </section>
+    <noscript><p>$requires_js</p></noscript>
+  </main>
+  <template id="tour-copy"
+    data-video-title="$video_title" data-video-tip="$video_tip"
+    data-chart-title="$chart_title" data-chart-tip="$chart_tip"
+    data-game-title="$game_title" data-game-tip="$game_tip"
+    data-returned="$returned" data-wrong-block="$wrong_block"
+    data-game-start="$game_start" data-game-play="$game_play" data-game-won="$game_won"
+    data-game-lost="$game_lost" data-tile="$tile" data-mine="$mine"></template>
+</body>
+</html>

@@ -1,4 +1,31 @@
 {
+  "onboardingTitle": {
+    "message": "Want to try Separate Window?"
+  },
+  "onboardingDescription": {
+    "message": "Open a video, a chart, and a mini-game in separate windows. You can come back to the tour later."
+  },
+  "onboardingStart": {
+    "message": "Start the tour"
+  },
+  "onboardingSkip": {
+    "message": "Skip"
+  },
+  "onboardingLink": {
+    "message": "Tutorial"
+  },
+  "tourVideoTip": {
+    "message": "Move your pointer to the top edge. Try “Always on top”, then choose “Back to tab”."
+  },
+  "tourChartTip": {
+    "message": "Move your pointer to the top edge. Try “−”, “+”, and “Fit”, then choose “Back to tab”."
+  },
+  "tourGameTip": {
+    "message": "Open a tile in this window. To return, move your pointer to the top edge and choose “Back to tab”."
+  },
+  "tourReturnTip": {
+    "message": "Move your pointer to the top edge and choose “Back to tab” to continue the tour."
+  },
   "shortcutUnassigned": {
     "message": "Assign shortcut"
   },

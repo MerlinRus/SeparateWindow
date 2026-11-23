@@ -1,7 +1,9 @@
-# Reviewer instructions — Separate Window 1.4.24
+# Reviewer instructions — Separate Window 1.5.0
 
 No account, credentials, payment, external application or server is required.
 The publisher is Mycelium; support: qobuz43@gmail.com.
+
+On a fresh install, the bundled welcome tab offers “Start the tour” and “Skip”. Starting opens the localized tutorial at separate.maark.ru. Use the real selection tool to detach the video, chart and Minesweeper game, then return each block to the tab. Skipping dismisses the welcome prompt. The “Tutorial” button in the popup opens the exercises at any time.
 
 1. Open any ordinary HTTP(S) page with a visible video, image or interactive widget. Internal Chrome pages and the Chrome Web Store restrict extensions.
 2. Click the extension icon and “Select a page element”. Move the pointer to an element; scrolling changes the selected ancestor. Click to open it in a popup. Esc cancels.

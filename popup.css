@@ -38,3 +38,17 @@ footer{display:flex;align-items:center;justify-content:space-between;padding:10p
 .feedback-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:center;gap:7px 8px}
 .feedback-grid>a{display:block;padding:7px 8px;border:1px solid var(--line);border-radius:6px;color:var(--ink);font-size:11px;text-align:center}.feedback-grid>a:hover{border-color:var(--accent);color:var(--accent);text-decoration:none}
 .feedback p{margin:0;color:var(--muted);font-size:10px}.feedback p a{text-decoration:underline}
+footer nav button{width:auto;padding:0;border:0;border-radius:2px;background:none;color:inherit;font:inherit}
+footer nav button:hover{color:var(--accent);text-decoration:underline}
+.onboarding-invite{color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:22px}
+dialog.onboarding-invite{width:calc(100% - 28px);max-width:348px;margin:auto;box-shadow:0 15px 50px #101a2b2e}
+dialog.onboarding-invite::backdrop{background:#18263869}
+.onboarding-invite p{margin:0;color:var(--muted);line-height:1.6}
+.onboarding-actions{display:grid;grid-template-columns:auto 1fr;gap:8px;margin-top:18px}
+.onboarding-actions button{font-size:12px;padding-inline:10px}
+.onboarding-invite .onboarding-status:not(:empty){margin-top:10px;color:var(--danger)}
+.welcome{width:auto;min-height:100vh;display:grid;place-items:center;padding:20px;background:var(--surface)}
+.welcome main{width:min(100%,490px);padding:clamp(20px,5vw,38px);font-size:16px;box-shadow:0 18px 45px #25375a17}
+.welcome h1{margin:16px 0 10px;font-size:clamp(1.45rem,4vw,2rem);line-height:1.2;letter-spacing:-.03em}
+.welcome .onboarding-actions button{font-size:.875rem}
+@media(max-width:380px){.welcome .onboarding-actions{grid-template-columns:1fr}}

@@ -6,6 +6,7 @@ const supported = url => /^(https?|file):/.test(url || '');
 const pageAddress = url => url?.split('#__sw_local=')[0];
 const tabJobs = new Map();
 const preferenceJobs = new Map();
+const onboardingKey = 'onboarding';
 
 function samePageRoute(first, second) {
   if (!supported(first) || !supported(second)) return false;
@@ -177,6 +178,7 @@ async function toggleVideoPin(tabId, selector) {
 }
 
 async function handle(message, sender) {
+  if (message.type === 'onboarding') return handleOnboarding(message.choice, sender);
   // Content scripts may act only on their own tab; popup commands require an extension page.
   const extensionPage = !sender.tab && sender.url?.startsWith(chrome.runtime.getURL(''));
   const tabId = sender.tab?.id ?? (extensionPage ? message.tabId : undefined);
@@ -184,6 +186,20 @@ async function handle(message, sender) {
   if (sender.tab && sender.frameId !== 0 && message.type !== 'pip-state') throw new Error(t('commandFailed'));
   if (message.type === 'window-state' || message.type === 'pip-state') return handleTab(tabId, message, sender);
   return inTabOrder(tabId, () => handleTab(tabId, message, sender));
+}
+
+function handleOnboarding(choice, sender) {
+  if (![chrome.runtime.getURL('popup.html'), chrome.runtime.getURL('welcome.html')].includes(sender.url) ||
+      !['start', 'skip', 'replay'].includes(choice)) throw new Error(t('commandFailed'));
+  return inPreferenceOrder(onboardingKey, async () => {
+    const current = (await chrome.storage.local.get(onboardingKey))[onboardingKey];
+    if (choice !== 'replay' && current !== 'pending') return;
+    if (choice !== 'skip') {
+      const path = SWI18n.language === 'ru' ? '/onboarding/' : '/en/onboarding/';
+      await chrome.tabs.create({url: 'https://separate.maark.ru' + path});
+    }
+    await chrome.storage.local.set({[onboardingKey]: choice === 'skip' ? 'skipped' : 'started'});
+  });
 }
 
 async function handleTab(tabId, message, sender) {
@@ -281,9 +297,15 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
   task.then(result => respond({ok: true, ...result}), error => respond({ok: false, error: error.message}));
   return true;
 });
-chrome.runtime.onInstalled.addListener(async () => {
+chrome.runtime.onInstalled.addListener(async ({reason}) => {
   await SWI18n.ready;
   chrome.contextMenus.removeAll(() => chrome.contextMenus.create({id: 'select', title: t('contextMenu'), contexts: ['all'], documentUrlPatterns: ['http://*/*', 'https://*/*', 'file:///*']}));
+  if (reason !== 'install') return;
+  await inPreferenceOrder(onboardingKey, async () => {
+    if ((await chrome.storage.local.get(onboardingKey))[onboardingKey]) return;
+    await chrome.storage.local.set({[onboardingKey]: 'pending'});
+    await chrome.tabs.create({url: chrome.runtime.getURL('welcome.html')});
+  }).catch(console.error);
 });
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'select' && tab) toggleSelection(tab.id).catch(console.error);

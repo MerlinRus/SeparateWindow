@@ -23,6 +23,7 @@ def main():
             args=[f'--disable-extensions-except={ROOT}',f'--load-extension={ROOT}'])
         try:
             worker=context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
+            worker.evaluate("chrome.storage.local.set({onboarding:'skipped'})")
             page=context.new_page()
             page.set_viewport_size({'width':376,'height':600})
             page.goto(f'chrome-extension://{worker.url.split("/")[2]}/popup.html')

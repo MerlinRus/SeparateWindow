@@ -13,9 +13,9 @@ assert manifest['manifest_version'] == 3 and manifest['default_locale'] == 'ru'
 assert 'activeTab' not in manifest['permissions']
 locales = {lang: json.loads((ROOT/f'_locales/{lang}/messages.json').read_text(encoding='utf-8')) for lang in ('ru','en')}
 assert locales['ru'].keys() == locales['en'].keys()
-for path in ('content.js','background.js','popup.html','manifest.json'):
+for path in ('content.js','background.js','popup.html','welcome.html','invitation.js','manifest.json'):
     text = (ROOT / path).read_text(encoding='utf-8')
-    keys = re.findall(r"\bt\('([^']+)'", text) + re.findall(r'__MSG_([^_]+)__',text) + re.findall(r'data-i18n(?:-label)?="([^"]+)"',text)
+    keys = re.findall(r"\bt\('([^']+)'", text) + re.findall(r'__MSG_([^_]+)__',text) + re.findall(r'data-(?:i18n(?:-label)?|onboarding-copy)="([^"]+)"',text)
     for key in keys:
         assert key in locales['ru'], (path,key)
 for lang, messages in locales.items():
@@ -50,7 +50,7 @@ assert (ROOT/'icons/favicon.ico').read_bytes() == (ROOT/'docs/favicon.ico').read
 package = ROOT/f'dist/separate-window-{manifest["version"]}.zip'
 with tempfile.TemporaryDirectory(prefix='sw-package-') as temp, zipfile.ZipFile(package) as archive:
     assert archive.testzip() is None
-    for path in [*manifest['action']['default_icon'].values(), 'icons/favicon.ico']:
+    for path in [*manifest['action']['default_icon'].values(), 'icons/favicon.ico', 'welcome.html', 'invitation.js']:
         assert path in archive.namelist(), path
     extracted = Path(temp)/'extension'
     archive.extractall(extracted)
@@ -68,6 +68,8 @@ with tempfile.TemporaryDirectory(prefix='sw-package-') as temp, zipfile.ZipFile(
                 page.locator('#version').wait_for()
                 assert page.locator('#version').text_content() == manifest['version']
                 assert page.locator('#select').text_content().strip().endswith(locales[language]['selectButton']['message'])
+                invite = page.locator('#onboarding-invite[open]')
+                invite.get_by_role('button', name=locales[language]['onboardingSkip']['message']).wait_for()
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                 assert page.locator('header img').evaluate('(e)=>e.complete&&e.naturalWidth>0')
                 print(f'PASS: extracted CWS package loads with {language} UI and icon', flush=True)
