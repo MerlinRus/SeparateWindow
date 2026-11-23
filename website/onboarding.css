@@ -11,8 +11,11 @@
 .tour-steps { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 22px; list-style: none; }
 .tour-steps li { padding: 4px 10px; border-radius: 8px; background: var(--paper); color: var(--muted); font-size: .875em; font-weight: 650; }
 .tour-steps [aria-current=step] { background: #e5ecff; color: var(--blue-dark); }
-.tour-picker { color: var(--muted); font-size: .95em; }
-.tour-picker kbd { display: inline-block; padding: 0 4px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; background: var(--paper); font: inherit; }
+.tour-instructions { margin: 12px 0 0; padding-inline-start: 1.35em; }
+.tour-instructions > li:not([hidden]) + li { margin-top: 8px; }
+.tour-shortcut { margin-top: 4px; color: var(--muted); font-size: .95em; }
+.tour-keys { white-space: nowrap; }
+.tour-shortcut kbd { display: inline-block; padding: 0 4px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; background: var(--paper); font: inherit; }
 .tour-return-hint { padding: 10px 12px; border-radius: 8px; background: #edf2ff; font-size: .95em; }
 .tour-return-hint strong, #complete-auto-pip strong { display: block; margin-bottom: 4px; }
 .tour-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px 12px; margin-top: 12px; }

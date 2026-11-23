@@ -5,6 +5,7 @@ const copy = document.querySelector('#tour-copy').dataset;
 const workspace = document.querySelector('#tour-workspace');
 const complete = document.querySelector('#tour-complete');
 const heading = document.querySelector('#tour-guide-heading');
+const videoStart = document.querySelector('#tour-video-start');
 const instruction = document.querySelector('#tour-instruction');
 const returnHint = document.querySelector('#tour-return-hint');
 const status = document.querySelector('#tour-status');
@@ -43,7 +44,9 @@ function render() {
   }
   heading.textContent = copy[active + 'Title'];
   instruction.textContent = copy[active + 'Tip'];
-  returnHint.hidden = active !== 'video';
+  const videoStep = active === 'video';
+  videoStart.hidden = !videoStep;
+  returnHint.hidden = !videoStep;
   status.hidden = !practiced && !wrongBlock;
   status.textContent = practiced ? copy.returned : wrongBlock ? copy.wrongBlock : '';
   status.dataset.kind = practiced ? 'success' : 'retry';

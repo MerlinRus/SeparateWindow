@@ -32,8 +32,14 @@
           <li data-tour-step="game">$game</li>
         </ol>
         <h2 id="tour-guide-heading" tabindex="-1">$video_title</h2>
-        <p id="tour-instruction">$video_tip</p>
-        <p class="tour-picker">$picker_before <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd>.</p>
+        <ol class="tour-instructions">
+          <li id="tour-video-start">$video_start</li>
+          <li>
+            $picker
+            <p class="tour-shortcut">$shortcut_before <span class="tour-keys"><kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd></span> $shortcut_after</p>
+          </li>
+          <li id="tour-instruction">$video_tip</li>
+        </ol>
         <p id="tour-return-hint" class="tour-return-hint"><strong>$return_hint_title</strong> $return_hint</p>
         <p id="tour-status" class="tour-status" role="status" hidden></p>
         <a id="tour-install" class="tour-text-button" href="$store">$install</a>
