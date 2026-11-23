@@ -46,6 +46,9 @@ def main():
                 assert title['x'] + title['width'] < languages['x'] and languages['x'] + languages['width'] < version['x']
                 centers = [box['y'] + box['height'] / 2 for box in (title, languages, version)]
                 assert max(centers) - min(centers) <= 2, centers
+                logo = page.locator('.app-header img').bounding_box()
+                tagline = page.locator('[data-i18n="appTagline"]').bounding_box()
+                assert tagline['x'] == title['x'] and tagline['y'] + tagline['height'] <= logo['y'] + logo['height']
                 assert page.get_by_text(messages['languageLabel']['message'], exact=True).count() == 0
                 assert page.locator('#forget').count() == 0, 'The popup must not contain the old selection reset button'
                 switch = page.get_by_role('switch', name=messages['autoPipLabel']['message'], exact=True)
@@ -63,7 +66,14 @@ def main():
                 assert height<=600, f'{lang} popup exceeds Chrome height: {height}'
                 assert page.locator('footer nav a').first.get_attribute('id')=='rate'
                 assert page.locator('#rate').get_attribute('href')==manifest['homepage_url']+'/reviews'
-                assert page.get_by_role('button', name=messages['shareExtension']['message'], exact=True).is_visible()
+                share_button = page.get_by_role('button', name=messages['shareExtension']['message'], exact=True)
+                assert share_button.is_visible()
+                share_box = share_button.bounding_box()
+                idea = page.locator('#suggest-feature').bounding_box()
+                email = page.locator('.feedback a[href^="mailto:"]').bounding_box()
+                assert share_box['x'] == idea['x'] and share_box['width'] == idea['width']
+                assert share_box['y'] > idea['y'] + idea['height']
+                assert abs(share_box['y'] + share_box['height'] / 2 - email['y'] - email['height'] / 2) <= 1
                 for selector in ('#report-bug','#suggest-feature'):
                     link=page.locator(selector)
                     url=urlparse(link.get_attribute('href'))

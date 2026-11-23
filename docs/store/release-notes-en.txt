@@ -1,1 +1,1 @@
-The “Share extension” button copies a link to Separate Window on the Chrome Web Store and shows a confirmation.
+Moved the “Share extension” button below “Suggest a feature” and aligned the header tagline.

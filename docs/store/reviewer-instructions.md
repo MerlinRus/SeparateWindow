@@ -1,4 +1,4 @@
-# Reviewer instructions — Separate Window 1.4.22
+# Reviewer instructions — Separate Window 1.4.23
 
 No account, credentials, payment, external application or server is required.
 The publisher is Mycelium; support: qobuz43@gmail.com.
