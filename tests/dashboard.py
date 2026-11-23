@@ -55,14 +55,48 @@ def main():
             try:
                 worker = context.service_workers[0] if context.service_workers else context.wait_for_event('serviceworker')
                 page = context.pages[0]
+
+                def select_panel(panel_url):
+                    worker.evaluate("""async url=>{const [tab]=await chrome.tabs.query({url});await tell(tab.id,'select');}""", panel_url)
+                    box = page.locator('#stat').bounding_box()
+                    page.mouse.move(box['x']+8,box['y']+8)
+                    page.mouse.click(box['x']+8,box['y']+8)
+                    page.wait_for_function('''document.querySelector('#stat')?.getAttributeNames().some(name=>name.endsWith('-target'))''')
+
+                def panel_background():
+                    png = page.locator('#stat').screenshot()
+                    return Image.open(io.BytesIO(png)).convert('RGB').getpixel((4,40))
+
+                def assert_panel_background(expected, label):
+                    actual = panel_background()
+                    assert max(abs(a - b) for a, b in zip(actual, expected)) <= 1, (label, expected, actual)
+
+                cases = [
+                    ('white', 'body{background:white;color:black} #stat{background:transparent}', (255,255,255)),
+                    ('layered', 'html{background:#284050} body{background:none} #cell{background:#80402080} #stat{background:transparent}', (84,64,56)),
+                    ('default', 'body,#stat{background:transparent}', (255,255,255)),
+                ]
+                for name, css, expected in cases:
+                    panel_url = url + '?background=' + name
+                    page.goto(panel_url)
+                    page.add_style_tag(content=css)
+                    assert_panel_background(expected, name + ' in tab')
+                    select_panel(panel_url)
+                    assert_panel_background(expected, name + ' in separate window')
+                    assert not page.locator('#outside').is_visible()
+                    worker.evaluate('''async url => {
+                      const [tab] = await chrome.tabs.query({url});
+                      await handle({type:'restore', tabId:tab.id}, {url:chrome.runtime.getURL('popup.html')});
+                    }''', panel_url)
+                    page.locator('#outside').wait_for(state='visible')
+                    assert_panel_background(expected, name + ' after restore')
+                print('PASS: transparent blocks keep the white, tinted or default page background')
+
                 page.goto(url)
                 page.wait_for_function('window.ticks>1')
                 identity = page.evaluate('window.identity')
                 dimensions = page.locator('#cell').evaluate('(e)=>({w:e.clientWidth,h:e.clientHeight})')
-                worker.evaluate("""async url=>{const [tab]=await chrome.tabs.query({url});await tell(tab.id,'select');}""", url)
-                box = page.locator('#stat').bounding_box()
-                page.mouse.move(box['x']+8,box['y']+8)
-                page.mouse.click(box['x']+8,box['y']+8)
+                select_panel(url)
                 page.wait_for_timeout(500)
                 page.screenshot(path=str(ROOT/'tests/dashboard-selected.png'))
                 assert page.locator('#stat').count()==1, f'BLACK WINDOW: panel unmounted; zero-size notifications={page.evaluate("window.zeroSizes")}'
@@ -90,9 +124,7 @@ def main():
                 bounds = page.locator('#stat').bounding_box()
                 assert abs(bounds['x']+bounds['width']/2-400)<2
                 assert abs(bounds['y']+bounds['height']/2-310)<2
-                png = page.screenshot()
-                image=Image.open(io.BytesIO(png)).convert('RGB')
-                assert image.getpixel((400,200)) != (0,0,0), 'Panel must actually paint, not merely have a DOM box'
+                assert_panel_background((30,39,54), 'dark panel after replacement')
                 page.evaluate('''() => {
                   const slot = document.createElement('div');
                   slot.id = 'new-slot';

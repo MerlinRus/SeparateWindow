@@ -24,7 +24,7 @@
   const playerControlsAttr = `data-${token}-player-controls`;
   let selected, selector, sourceUrl, initialSize, cropStyle, ui, shadow, picker, recoveryTimer;
   let selectionObserver, selectionTimer, selectionGeneration = 0;
-  let ancestors = [], ancestorLayout = [], cropObserver, scale = 1, rotation = 0, fit = true;
+  let ancestors = [], ancestorLayout = [], cropBackground, cropObserver, scale = 1, rotation = 0, fit = true;
   let marker, markerTarget, markerEvents, savedSelector, noticeTimer, detached = false, pinButton, pipActive = false, cleanVideo = false;
   let blockPreview;
   let blockPreviewRequestSize;
@@ -300,7 +300,7 @@
     cropStyle.textContent = `
       ${ancestor}{display:contents!important;position:static!important;margin:0!important;padding:0!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;outline:0!important;transform:none!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:none!important;backdrop-filter:none!important;perspective:none!important;contain:none!important;container-type:normal!important;content-visibility:visible!important;clip:auto!important;clip-path:none!important;overflow:visible!important;opacity:1!important;isolation:auto!important;mix-blend-mode:normal!important;will-change:auto!important}
       ${ancestor}::before,${ancestor}::after{content:none!important;display:none!important}
-      html${ancestor}{display:block!important;background:#000!important}
+      html${ancestor}{display:block!important;background:${cropBackground}!important}
       ${ancestor} > :not(${ancestor}):not(${target}):not(${controls}):not(${host}):not(style):not(script):not(link)${settingsLayer ? `:not(${settingsLayer})` : ''}{display:none!important}
       ${target},${controls}{position:fixed!important;inset:auto!important;width:${width}!important;height:${height}!important;min-width:0!important;min-height:0!important;max-width:none!important;max-height:none!important;margin:0!important;${placement}transform-origin:center!important;box-sizing:border-box!important;}
       ${target}{display:${initialSize.display}!important;z-index:2147483640!important;translate:none!important;rotate:none!important;scale:none!important;zoom:1!important;filter:none!important;visibility:visible!important;}
@@ -678,6 +678,19 @@
       node.setAttribute(ancestorAttr, String(ancestors.length));
       ancestors.push(node); ancestorLayout.push(box);
     }
+    cropBackground = readCropBackground();
+  }
+
+  function readCropBackground() {
+    if (initialSize.media || selected.matches(playerSelector)) return '#000';
+    const layers = [];
+    for (const ancestor of ancestors) {
+      const color = getComputedStyle(ancestor).backgroundColor;
+      if (color.startsWith('rgb(')) return layers.concat(color).join(', ');
+      if (color !== 'rgba(0, 0, 0, 0)') layers.push(`linear-gradient(${color}, ${color})`);
+    }
+    // Solid layers retain translucent tints while the rest of the page is hidden.
+    return layers.concat('Canvas').join(', ');
   }
 
   function syncPlayerControls() {

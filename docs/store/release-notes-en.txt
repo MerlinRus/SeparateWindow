@@ -1,1 +1,1 @@
-Simplified the popup by removing the “Forget selection for this page” button. Use the site checkbox to turn Auto PiP on or off.
+Cards and widgets keep their original background color in a separate window, so text stays readable on light pages.
