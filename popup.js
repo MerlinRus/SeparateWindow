@@ -22,7 +22,6 @@ function render() {
   for (const element of document.querySelectorAll('[data-i18n]')) element.textContent = SWI18n.t(element.dataset.i18n);
   for (const element of document.querySelectorAll('[data-i18n-label]')) element.setAttribute('aria-label', SWI18n.t(element.dataset.i18nLabel));
   for (const button of document.querySelectorAll('[data-language]')) button.setAttribute('aria-pressed', String(button.dataset.language === SWI18n.language));
-  autoPipOption.title = SWI18n.t('autoPipHelp');
   const version = chrome.runtime.getManifest().version;
   document.querySelector('#version').textContent = version;
   renderShortcut();

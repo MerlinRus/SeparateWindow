@@ -27,6 +27,10 @@ def main():
             page.set_viewport_size({'width':376,'height':600})
             page.goto(f'chrome-extension://{worker.url.split("/")[2]}/popup.html')
             page.locator('#version').wait_for()
+            card = page.locator('#auto-pip-option')
+            assert card.is_hidden(), 'The switch is hidden on unsupported pages'
+            # Show the supported-site layout without changing the active tab or permissions.
+            card.evaluate('element => {element.hidden = false; element.querySelector("input").disabled = false;}')
             shortcut = worker.evaluate("async()=> (await chrome.commands.getAll()).find(c=>c.name==='select')?.shortcut || ''")
             for lang in ('ru','en'):
                 page.locator(f'[data-language="{lang}"]').click()
@@ -44,8 +48,16 @@ def main():
                 assert max(centers) - min(centers) <= 2, centers
                 assert page.get_by_text(messages['languageLabel']['message'], exact=True).count() == 0
                 assert page.locator('#forget').count() == 0, 'The popup must not contain the old selection reset button'
-                assert page.locator('#auto-pip').get_attribute('type') == 'checkbox'
-                assert page.locator('#auto-pip-option span').text_content() == messages['autoPipLabel']['message']
+                switch = page.get_by_role('switch', name=messages['autoPipLabel']['message'], exact=True)
+                assert switch.is_visible() and switch.get_attribute('type') == 'checkbox'
+                help_text = page.locator('#' + switch.get_attribute('aria-describedby'))
+                assert help_text.is_visible() and help_text.text_content() == messages['autoPipHelp']['message']
+                box = card.bounding_box()
+                restore = page.locator('#restore').bounding_box()
+                assert box['y'] + box['height'] < restore['y'] and box['width'] == restore['width']
+                page.locator('#select').focus()
+                page.keyboard.press('Tab')
+                assert switch.evaluate('element => element.matches(":focus-visible")')
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                 height=page.locator('body').bounding_box()['height']
                 assert height<=600, f'{lang} popup exceeds Chrome height: {height}'

@@ -26,8 +26,14 @@
       <div class="selection-hint"><span aria-hidden="true">⌖</span><p data-i18n="pickerHelp">Наведите на блок. Колесо меняет область, щелчок открывает окно. Esc — отмена.</p></div>
     </section>
     <section class="page-actions" aria-label="Page actions" data-i18n-label="pageActions">
+      <label id="auto-pip-option" class="auto-pip" hidden>
+        <span class="auto-pip-copy">
+          <span id="auto-pip-label" data-i18n="autoPipLabel">Видео поверх окон</span>
+          <span id="auto-pip-help" data-i18n="autoPipHelp">При смене вкладки играющее видео с этого сайта откроется в маленьком окне.</span>
+        </span>
+        <input id="auto-pip" type="checkbox" role="switch" aria-labelledby="auto-pip-label" aria-describedby="auto-pip-help" disabled>
+      </label>
       <button id="restore" class="secondary"><span aria-hidden="true">↩</span><span data-i18n="restoreButton">Вернуть страницу во вкладку</span></button>
-      <label id="auto-pip-option" class="auto-pip" hidden><input id="auto-pip" type="checkbox" disabled><span data-i18n="autoPipLabel">Авто-PiP на сайте</span></label>
     </section>
     <div id="status" role="status" aria-live="polite"></div>
     <section class="feedback" aria-labelledby="feedback-heading">

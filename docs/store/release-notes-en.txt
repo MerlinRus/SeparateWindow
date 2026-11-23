@@ -1,1 +1,1 @@
-Fixed Dailymotion player selection. Block previews now prepare the region before starting tab capture and time out if cropping stalls.
+Updated the “Keep video on top” switch and added an explanation of when the video opens automatically.

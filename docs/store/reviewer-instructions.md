@@ -1,4 +1,4 @@
-# Reviewer instructions — Separate Window 1.4.19
+# Reviewer instructions — Separate Window 1.4.20
 
 No account, credentials, payment, external application or server is required.
 The publisher is Mycelium; support: qobuz43@gmail.com.
@@ -35,4 +35,4 @@ Run `python tests/smoke.py` for the isolated Chromium test. Run `python tools/st
 
 13. Resize the floating widget preview, close it, and reopen it from the same tab. Chrome can restore the position, and the extension keeps the new preview size for a fresh page. Resize and reopening are also exercised by `python tests/pip.py --chrome --headed`.
 
-14. In the extension menu, enable “Auto PiP on this site” for an HTTPS site playing an eligible video. Switch to another tab. The extension uses Chrome's media-session callback, and Chrome may ask for permission. The preference is scoped to the site. `python tests/pip.py --chrome --headed --auto-only` checks the callback and native PiP window.
+14. In the extension menu, enable “Keep video on top” for an HTTPS site playing an eligible video. Switch to another tab. The extension uses Chrome's media-session callback, and Chrome may ask for permission. The preference is scoped to the site. `python tests/pip.py --chrome --headed --auto-only` checks the callback and native PiP window.

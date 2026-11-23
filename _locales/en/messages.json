@@ -177,10 +177,10 @@
     "message": "Show player"
   },
   "autoPipLabel": {
-    "message": "Auto PiP on this site"
+    "message": "Keep video on top"
   },
   "autoPipHelp": {
-    "message": "Open playing video in picture-in-picture when you switch tabs. Allow automatic picture-in-picture if Chrome asks."
+    "message": "The video on this site keeps playing in a small window when you switch tabs."
   },
   "onlyVideo": {
     "message": "Video only"
