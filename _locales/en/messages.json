@@ -248,6 +248,15 @@
   "rateLink": {
     "message": "Rate us"
   },
+  "shareExtension": {
+    "message": "Share extension"
+  },
+  "shareCopied": {
+    "message": "Extension link copied"
+  },
+  "shareCopyFailed": {
+    "message": "Couldn’t copy the link. Try again."
+  },
   "feedbackHeading": {
     "message": "Feedback"
   },

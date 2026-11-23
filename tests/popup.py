@@ -63,6 +63,7 @@ def main():
                 assert height<=600, f'{lang} popup exceeds Chrome height: {height}'
                 assert page.locator('footer nav a').first.get_attribute('id')=='rate'
                 assert page.locator('#rate').get_attribute('href')==manifest['homepage_url']+'/reviews'
+                assert page.get_by_role('button', name=messages['shareExtension']['message'], exact=True).is_visible()
                 for selector in ('#report-bug','#suggest-feature'):
                     link=page.locator(selector)
                     url=urlparse(link.get_attribute('href'))
@@ -75,6 +76,32 @@ def main():
                 assert page.locator('.feedback a[href^="mailto:"]').get_attribute('href')=='mailto:qobuz43@gmail.com'
                 page.screenshot(path=str(ROOT/f'tests/popup-{lang}.png'),full_page=True)
                 print(f'PASS: {lang} popup {height}px, inline language switch, rating, localized issue drafts and email')
+
+            # Capture Clipboard API calls without touching the desktop clipboard.
+            page.evaluate('''() => {
+              window.shareWrites = [];
+              navigator.clipboard.writeText = async (text) => {
+                if (window.denyClipboardWrite) throw new DOMException('Denied', 'NotAllowedError');
+                window.shareWrites.push({text, activated:navigator.userActivation.isActive});
+              };
+            }''')
+            share = page.locator('#share')
+            share_status = page.locator('#share-status')
+            share.click()
+            page.wait_for_function('message => document.querySelector("#share-status").textContent === message',
+                                   arg=messages['shareCopied']['message'])
+            assert share_status.is_visible()
+            assert page.evaluate('window.shareWrites') == [{'text': manifest['homepage_url'], 'activated': True}]
+            page.locator('[data-language="ru"]').click()
+            russian = json.loads((ROOT/'_locales/ru/messages.json').read_text(encoding='utf-8'))
+            page.wait_for_function('message => document.querySelector("#share-status").textContent === message',
+                                   arg=russian['shareCopied']['message'])
+            page.evaluate('window.denyClipboardWrite = true')
+            share.click()
+            page.wait_for_function('message => document.querySelector("#share-status").textContent === message',
+                                   arg=russian['shareCopyFailed']['message'])
+            assert page.evaluate('window.shareWrites.length') == 1
+            print('PASS: sharing writes the Chrome Web Store URL after a click and shows localized success and failure messages')
         finally:context.close()
     print('PASS: toolbar mark is at least 25% larger; padded store icon preserved')
 

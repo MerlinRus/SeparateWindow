@@ -248,6 +248,15 @@
   "rateLink": {
     "message": "Оценить нас"
   },
+  "shareExtension": {
+    "message": "Поделиться расширением"
+  },
+  "shareCopied": {
+    "message": "Ссылка на расширение скопирована"
+  },
+  "shareCopyFailed": {
+    "message": "Не удалось скопировать ссылку. Попробуйте ещё раз."
+  },
   "feedbackHeading": {
     "message": "Обратная связь"
   },

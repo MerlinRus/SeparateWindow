@@ -1,6 +1,8 @@
 let selectShortcut;
+let shareStatusTimer;
 const autoPip = document.querySelector('#auto-pip');
 const autoPipOption = document.querySelector('#auto-pip-option');
+const shareStatus = document.querySelector('#share-status');
 
 function renderShortcut() {
   const keys = document.querySelector('#shortcut-keys');
@@ -34,6 +36,7 @@ function render() {
 }
 SWI18n.onChange(old => {
   render(); const status = document.querySelector('#status'); status.textContent = SWI18n.translate(status.textContent, old);
+  shareStatus.textContent = SWI18n.translate(shareStatus.textContent, old);
 });
 SWI18n.ready.then(render).catch(error => {document.querySelector('#status').textContent = error.message;});
 chrome.commands.getAll().then(commands => {
@@ -75,6 +78,18 @@ for (const language of document.querySelectorAll('[data-language]')) language.ad
   try {await chrome.storage.local.set({language:language.dataset.language}); await SWI18n.reload(); render();}
   catch (error) {document.querySelector('#status').textContent = error.message;}
   finally {for (const button of buttons) button.disabled = false;}
+});
+
+document.querySelector('#share').addEventListener('click', async () => {
+  let resultKey = 'shareCopied';
+  try {
+    await navigator.clipboard.writeText(chrome.runtime.getManifest().homepage_url);
+  } catch {
+    resultKey = 'shareCopyFailed';
+  }
+  clearTimeout(shareStatusTimer);
+  shareStatus.textContent = SWI18n.t(resultKey);
+  shareStatusTimer = setTimeout(() => {shareStatus.textContent = '';}, 4000);
 });
 
 for (const button of document.querySelectorAll('#select,#restore')) {

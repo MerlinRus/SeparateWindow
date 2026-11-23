@@ -1,1 +1,1 @@
-Added a smooth thumb and track animation to the “Keep video on top” switch.
+The “Share extension” button copies a link to Separate Window on the Chrome Web Store and shows a confirmation.
