@@ -31,15 +31,16 @@ def main():
             assert card.is_hidden(), 'The switch is hidden on unsupported pages'
             # Show the supported-site layout without changing the active tab or permissions.
             card.evaluate('element => {element.hidden = false; element.querySelector("input").disabled = false;}')
-            shortcut = worker.evaluate("async()=> (await chrome.commands.getAll()).find(c=>c.name==='select')?.shortcut || ''")
+            command = worker.evaluate("async()=> (await chrome.commands.getAll()).find(c=>c.name==='select')")
+            shortcut = manifest['commands']['select']['suggested_key']['default']
+            assert command['shortcut'] == shortcut
             for lang in ('ru','en'):
                 page.locator(f'[data-language="{lang}"]').click()
                 page.wait_for_function('(lang)=>document.documentElement.lang===lang',arg=lang)
                 page.wait_for_function('![...document.querySelectorAll("[data-language]")].some(b=>b.disabled)')
                 assert page.locator('#status').inner_text()==''
                 messages = json.loads((ROOT/f'_locales/{lang}/messages.json').read_text(encoding='utf-8'))
-                expected = shortcut or messages['shortcutUnassigned']['message']
-                page.wait_for_function('value=>document.querySelector("#shortcut-keys").textContent===value', arg=expected)
+                page.wait_for_function('value=>document.querySelector("#shortcut-keys").textContent===value', arg=shortcut)
                 title = page.locator('.app-header h1 a').bounding_box()
                 languages = page.get_by_role('group', name=messages['languageLabel']['message'], exact=True).bounding_box()
                 version = page.locator('#version').bounding_box()
@@ -112,6 +113,32 @@ def main():
                                    arg=russian['shareCopyFailed']['message'])
             assert page.evaluate('window.shareWrites.length') == 1
             print('PASS: sharing writes the Chrome Web Store URL after a click and shows localized success and failure messages')
+
+            settings_url = 'chrome://extensions/shortcuts'
+            command_name = command['description']
+            settings = context.new_page()
+            settings.goto(settings_url)
+            field = settings.locator('cr-shortcut-input').filter(has=settings.get_by_role('textbox', name=command_name))
+            field.get_by_role('button').click()
+            settings.keyboard.press('Backspace')
+            settings.close()
+
+            page.reload()
+            for lang, label in (('ru', 'Назначить клавиши'), ('en', 'Assign shortcut')):
+                page.locator(f'[data-language="{lang}"]').click()
+                page.get_by_role('button', name=label, exact=True).wait_for(timeout=5000)
+            with context.expect_page() as opened:
+                page.get_by_role('button', name='Assign shortcut', exact=True).click()
+            settings = opened.value
+            settings.wait_for_url(settings_url)
+            field = settings.locator('cr-shortcut-input').filter(has=settings.get_by_role('textbox', name=command_name))
+            field.get_by_role('button').click()
+            settings.keyboard.press(shortcut)
+            settings.close()
+            page.reload()
+            page.wait_for_function('value=>document.querySelector("#shortcut-keys").textContent===value', arg=shortcut)
+            assert page.locator('#shortcut-keys kbd').all_text_contents() == shortcut.split('+')
+            print('PASS: clearing the shortcut shows a localized action that opens Chrome settings and supports restoring the shortcut')
         finally:context.close()
     print('PASS: toolbar mark is at least 25% larger; padded store icon preserved')
 

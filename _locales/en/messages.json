@@ -1,6 +1,9 @@
 {
   "shortcutUnassigned": {
-    "message": "Not assigned"
+    "message": "Assign shortcut"
+  },
+  "shortcutSettings": {
+    "message": "Configure shortcut"
   },
   "privateBounds": {
     "message": "Window size and position are not saved in Incognito."

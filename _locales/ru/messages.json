@@ -1,6 +1,9 @@
 {
   "shortcutUnassigned": {
-    "message": "Не назначено"
+    "message": "Назначить клавиши"
+  },
+  "shortcutSettings": {
+    "message": "Настроить клавиши"
   },
   "privateBounds": {
     "message": "В режиме инкогнито размеры и положение окна не сохраняются."

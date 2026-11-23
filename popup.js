@@ -6,11 +6,13 @@ const shareStatus = document.querySelector('#share-status');
 
 function renderShortcut() {
   const keys = document.querySelector('#shortcut-keys');
-  keys.replaceChildren();
+  const settingsLabel = SWI18n.t('shortcutSettings');
+  keys.title = settingsLabel;
   if (!selectShortcut) {
-    keys.textContent = selectShortcut === '' ? SWI18n.t('shortcutUnassigned') : selectShortcut === null ? '—' : '…';
+    keys.textContent = selectShortcut === '' ? SWI18n.t('shortcutUnassigned') : settingsLabel;
     return;
   }
+  keys.replaceChildren();
   for (const key of selectShortcut.split('+')) {
     if (keys.children.length) keys.append('+');
     const cap = document.createElement('kbd');
@@ -43,6 +45,14 @@ chrome.commands.getAll().then(commands => {
   selectShortcut = commands.find(command => command.name === 'select')?.shortcut || '';
   renderShortcut();
 }).catch(() => {selectShortcut = null; renderShortcut();});
+
+document.querySelector('#shortcut-keys').addEventListener('click', async () => {
+  try {
+    await chrome.tabs.create({url: 'chrome://extensions/shortcuts'});
+  } catch (error) {
+    document.querySelector('#status').textContent = error.message;
+  }
+});
 
 async function autoPipPreference(enabled) {
   const [tab] = await chrome.tabs.query({active: true, currentWindow: true});

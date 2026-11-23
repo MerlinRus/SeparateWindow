@@ -1,1 +1,1 @@
-Moved the “Share extension” button below “Suggest a feature” and aligned the header tagline.
+Open Chrome’s keyboard shortcut settings directly from the extension menu.
