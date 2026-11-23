@@ -1,4 +1,4 @@
-# Reviewer instructions — Separate Window 1.4.14
+# Reviewer instructions — Separate Window 1.4.15
 
 No account, credentials, payment, external application or server is required.
 The publisher is Mycelium; support: qobuz43@gmail.com.
@@ -20,7 +20,7 @@ Resize a detached Twitch player and verify that the video and controls follow th
 In a detached RUTUBE embed, open the native gear menu and the quality submenu. Open the block link from the extension toolbar and press Escape to close it. If the selected video has not loaded its metadata, “Always on top” should ask you to start playback.
 8. Start a video and use “Always on top” in the hover toolbar. Chrome opens the video in its built-in picture-in-picture player, including nested cross-origin frames inside closed web components. Press “Unpin” or close the floating window to return to the player. Site controls and subtitles may be unavailable, and some players prohibit PiP.
 
-9. Change Language in the extension menu using the RU / EN buttons (browser language is the initial default). Verify that the popup, existing picker/toolbar, tooltips, messages and context menu update without reloading the page, and the preference survives reopening the menu.
+9. Use the RU / EN buttons in the popup header, between the name and version. Verify that the popup, existing picker and toolbar, tooltips, messages and context menu update without reloading the page. The preference survives reopening the menu, and the initial default is the browser language.
 
 10. Dynamic non-video panels preserve their measured ancestor sizes and are reselected after the page replaces their DOM nodes. Run `python tests/dashboard.py` for a local ResizeObserver-based reproduction with live updates, clicks, window resizing, replacement of both panel and parent, and restoration. No private Grafana instance is required or claimed to have been tested.
 

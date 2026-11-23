@@ -10,11 +10,15 @@
 <body>
   <header class="app-header">
     <img src="icons/action48.png" width="40" height="40" alt="">
-    <div><h1><a href="https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm" target="_blank" rel="noopener noreferrer">Separate Window</a></h1><p data-i18n="appTagline">Больше места для главного</p></div>
+    <h1><a href="https://chromewebstore.google.com/detail/separate-window/fhcafcdfknddjfgbbkhpglgamceiclcm" target="_blank" rel="noopener noreferrer">Separate Window</a></h1>
+    <div id="language" class="language-switch" role="group" aria-label="Язык" data-i18n-label="languageLabel">
+      <button type="button" data-language="ru" aria-label="Русский" aria-pressed="false">RU</button>
+      <button type="button" data-language="en" aria-label="English" aria-pressed="false">EN</button>
+    </div>
     <span class="version" id="version"></span>
+    <p data-i18n="appTagline">Больше места для главного</p>
   </header>
   <main>
-    <div class="language"><span id="language-label" data-i18n="languageLabel">Язык</span><div id="language" class="language-switch" role="group" aria-labelledby="language-label"><button type="button" data-language="ru" aria-label="Русский" aria-pressed="false">RU</button><button type="button" data-language="en" aria-label="English" aria-pressed="false">EN</button></div></div>
     <section class="selection" aria-labelledby="selection-title">
       <h2 id="selection-title" data-i18n="popupHeading">Любой блок — отдельное окно</h2>
       <p data-i18n="popupIntro">Смотрите видео, следите за виджетом или работайте с частью страницы без лишнего вокруг.</p>

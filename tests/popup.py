@@ -33,8 +33,16 @@ def main():
                 page.wait_for_function('(lang)=>document.documentElement.lang===lang',arg=lang)
                 page.wait_for_function('![...document.querySelectorAll("[data-language]")].some(b=>b.disabled)')
                 assert page.locator('#status').inner_text()==''
-                expected = shortcut or json.loads((ROOT/f'_locales/{lang}/messages.json').read_text(encoding='utf-8'))['shortcutUnassigned']['message']
+                messages = json.loads((ROOT/f'_locales/{lang}/messages.json').read_text(encoding='utf-8'))
+                expected = shortcut or messages['shortcutUnassigned']['message']
                 page.wait_for_function('value=>document.querySelector("#shortcut-keys").textContent===value', arg=expected)
+                title = page.locator('.app-header h1 a').bounding_box()
+                languages = page.get_by_role('group', name=messages['languageLabel']['message'], exact=True).bounding_box()
+                version = page.locator('#version').bounding_box()
+                assert title['x'] + title['width'] < languages['x'] and languages['x'] + languages['width'] < version['x']
+                centers = [box['y'] + box['height'] / 2 for box in (title, languages, version)]
+                assert max(centers) - min(centers) <= 2, centers
+                assert page.get_by_text(messages['languageLabel']['message'], exact=True).count() == 0
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                 height=page.locator('body').bounding_box()['height']
                 assert height<=600, f'{lang} popup exceeds Chrome height: {height}'
@@ -51,7 +59,7 @@ def main():
                     assert link.get_attribute('rel')=='noopener noreferrer'
                 assert page.locator('.feedback a[href^="mailto:"]').get_attribute('href')=='mailto:qobuz43@gmail.com'
                 page.screenshot(path=str(ROOT/f'tests/popup-{lang}.png'),full_page=True)
-                print(f'PASS: {lang} popup {height}px, language buttons, rating, localized issue drafts and email')
+                print(f'PASS: {lang} popup {height}px, inline language switch, rating, localized issue drafts and email')
         finally:context.close()
     print('PASS: toolbar mark is at least 25% larger; padded store icon preserved')
 

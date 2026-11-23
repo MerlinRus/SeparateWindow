@@ -1,1 +1,1 @@
-Added opt-in automatic picture-in-picture on supported sites when switching tabs. Floating previews remember their resized dimensions.
+Moved the RU/EN language switch to the popup header to free up space for the main actions.
