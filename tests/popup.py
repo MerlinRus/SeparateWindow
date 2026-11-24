@@ -30,8 +30,10 @@ def main():
             page.locator('#version').wait_for()
             card = page.locator('#auto-pip-option')
             assert card.is_hidden(), 'The switch is hidden on unsupported pages'
+            assert page.locator('.page-actions').is_hidden(), 'Do not leave an empty panel on unsupported pages'
+            assert page.locator('#restore').count() == 0, 'Restore is available in the detached window toolbar'
             # Show the supported-site layout without changing the active tab or permissions.
-            card.evaluate('element => {element.hidden = false; element.querySelector("input").disabled = false;}')
+            card.evaluate('element => {element.closest(".page-actions").hidden = false; element.querySelector("input").disabled = false;}')
             command = worker.evaluate("async()=> (await chrome.commands.getAll()).find(c=>c.name==='select')")
             shortcut = manifest['commands']['select']['suggested_key']['default']
             assert command['shortcut'] == shortcut
@@ -58,8 +60,8 @@ def main():
                 help_text = page.locator('#' + switch.get_attribute('aria-describedby'))
                 assert help_text.is_visible() and help_text.text_content() == messages['autoPipHelp']['message']
                 box = card.bounding_box()
-                restore = page.locator('#restore').bounding_box()
-                assert box['y'] + box['height'] < restore['y'] and box['width'] == restore['width']
+                feedback = page.locator('.feedback').bounding_box()
+                assert box['y'] + box['height'] < feedback['y'] and box['width'] == feedback['width']
                 page.locator('#select').focus()
                 page.keyboard.press('Tab')
                 assert switch.evaluate('element => element.matches(":focus-visible")')

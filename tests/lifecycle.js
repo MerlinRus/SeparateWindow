@@ -121,6 +121,19 @@ function worker({incognito = false} = {}) {
   }
   {
     const run = worker();
+    const sendShortcut = () => run.chrome.commands.onCommand.listener('select', run.tabs.get(1));
+    await sendShortcut();
+    await run.idle();
+    assert.deepEqual(run.messages, [[1, 'select']]);
+    await run.send('detach', {selector: '#video'});
+    assert.equal(run.tabs.get(1).windowId, 20);
+    await sendShortcut();
+    await run.idle();
+    assert.equal(run.tabs.get(1).windowId, 10);
+    assert.equal(Object.keys(run.session.records).length, 0);
+  }
+  {
+    const run = worker();
     await run.send('detach', {selector: '#video'});
     let active = run.tabs.get(1);
     run.chrome.tabs.query = async () => [active];
@@ -168,5 +181,5 @@ function worker({incognito = false} = {}) {
     assert.equal((await privateRun.popupCommand('auto-pip', {enabled: true})).available, false);
     assert.equal(privateRun.writes.length, 0);
   }
-  console.log('PASS: private storage, quota, failed moves, immediate close, context menu, reused placeholder, capture tab switch, Auto PiP and onboarding lifecycle');
+  console.log('PASS: private storage, quota, failed moves, immediate close, context menu, shortcut return, capture tab switch, Auto PiP and onboarding lifecycle');
 })().catch(error => {console.error(error); process.exitCode = 1;});

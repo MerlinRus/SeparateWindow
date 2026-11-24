@@ -1,7 +1,7 @@
 let selectShortcut;
 let shareStatusTimer;
 const autoPip = document.querySelector('#auto-pip');
-const autoPipOption = document.querySelector('#auto-pip-option');
+const pageActions = document.querySelector('.page-actions');
 const shareStatus = document.querySelector('#share-status');
 
 function renderShortcut() {
@@ -66,7 +66,7 @@ autoPipPreference().then(enabled => {
   if (enabled === null) return;
   autoPip.checked = enabled;
   autoPip.disabled = false;
-  autoPipOption.hidden = false;
+  pageActions.hidden = false;
 }).catch(() => {});
 
 autoPip.addEventListener('change', async () => {
@@ -102,19 +102,18 @@ document.querySelector('#share').addEventListener('click', async () => {
   shareStatusTimer = setTimeout(() => {shareStatus.textContent = '';}, 4000);
 });
 
-for (const button of document.querySelectorAll('#select,#restore')) {
-  button.addEventListener('click', async () => {
-    button.disabled = true;
-    try {
-      await SWI18n.ready;
-      const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
-      if (!tab) throw new Error(SWI18n.t('noActiveTab'));
-      const result = await chrome.runtime.sendMessage({type: button.id, tabId: tab.id});
-      if (!result?.ok) throw new Error(result?.error || SWI18n.t('commandFailed'));
-      window.close();
-    } catch (error) {
-      document.querySelector('#status').textContent = error.message;
-      button.disabled = false;
-    }
-  });
-}
+const selectButton = document.querySelector('#select');
+selectButton.addEventListener('click', async () => {
+  selectButton.disabled = true;
+  try {
+    await SWI18n.ready;
+    const [tab] = await chrome.tabs.query({active: true, currentWindow: true});
+    if (!tab) throw new Error(SWI18n.t('noActiveTab'));
+    const result = await chrome.runtime.sendMessage({type: 'select', tabId: tab.id});
+    if (!result?.ok) throw new Error(result?.error || SWI18n.t('commandFailed'));
+    window.close();
+  } catch (error) {
+    document.querySelector('#status').textContent = error.message;
+    selectButton.disabled = false;
+  }
+});

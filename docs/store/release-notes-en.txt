@@ -1,1 +1,1 @@
-Try the new interactive tutorial. Open a video, a chart, and a Minesweeper game in separate windows, then try zooming or picture-in-picture. Skip the tour or start it any time from the extension menu.
+We simplified the extension menu. To return to the page without reloading it, use “Back to tab” in the separate window or press Alt+Shift+S if the shortcut is assigned.

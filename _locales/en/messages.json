@@ -56,9 +56,6 @@
   "pickerHelp": {
     "message": "Point at an element. Scroll to adjust the selection, click to open it. Esc cancels."
   },
-  "restoreButton": {
-    "message": "Return page to tab"
-  },
   "pageActions": {
     "message": "Page actions"
   },
