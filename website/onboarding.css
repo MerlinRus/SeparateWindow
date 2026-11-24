@@ -23,9 +23,7 @@
 .tour-primary, .tour-secondary, .tour-text-button { display: inline-flex; align-items: center; min-height: 42px; border-radius: 8px; font-size: .94em; font-weight: 650; cursor: pointer; }
 .tour-primary, .tour-secondary { padding: 8px 14px; border: 1px solid transparent; }
 .tour-primary { background: var(--blue); color: var(--white); }
-.tour-primary:hover { background: var(--blue-dark); }
 .tour-secondary { border-color: var(--line); background: var(--white); color: var(--ink); text-decoration: none; }
-.tour-secondary:hover { border-color: var(--blue); background: var(--paper); }
 .tour-text-button { padding: 4px 0; border: 0; background: none; color: var(--blue-dark); text-underline-offset: .2em; text-decoration: underline; }
 .tour-status { padding: 8px 12px; border-radius: 8px; background: #eaf5ed; color: #204f39; }
 .tour-status[data-kind=retry] { background: #fff2db; color: #66460b; }
@@ -51,11 +49,28 @@ html[data-separate-window-tour^="open:"] [data-tour-example] { outline: 0; borde
 .game-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0 12px; margin-bottom: 10px; }
 .game-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; width: min(100%, 320px); margin-inline: auto; }
 .game-tile { display: grid; place-items: center; aspect-ratio: 1; min-width: 0; padding: 0; border: 1px solid #7898e4; border-radius: 6px; background: #c9d9fe; color: var(--blue-dark); font-weight: 750; cursor: pointer; }
-.game-tile:hover, .game-tile:focus-visible { background: #a6bfff; }
+.game-tile:focus-visible { background: #a6bfff; }
 .game-tile[data-open] { background: #f8faff; border-color: #c6d3ed; cursor: default; }
 .game-tile[data-mine] { border-color: #bb543e; background: #ffe1d8; color: #712618; }
 .tour-complete { max-width: 48rem; }
 .tour-complete ul { padding-left: 1.2em; }
 .tour-complete li + li { margin-top: 8px; }
+@media (hover: hover) and (pointer: fine) {
+  .tour-primary:hover { background: var(--blue-dark); }
+  .tour-secondary:hover { border-color: var(--blue); background: var(--paper); }
+  .game-tile:not([data-open]):hover { background: #a6bfff; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  :where(.tour-steps li, .game-tile) { transition: background-color var(--press), color var(--press); }
+  :where(.tour-primary, .tour-secondary) {
+    transition: background-color var(--press), border-color var(--press), transform var(--press);
+  }
+  :where(.tour-primary, .tour-secondary):active { transform: scale(.98); }
+  .tour-intro { animation: settle-in 300ms var(--ease-out) backwards; }
+  :where(.tour-scene, .tour-complete, .tour-status) { transition: opacity var(--motion); }
+  @starting-style {
+    :where(.tour-scene, .tour-complete, .tour-status) { opacity: .76; }
+  }
+}
 @media(max-width: 800px) { .tour-workspace { grid-template-columns: minmax(0, 1fr); } }
 @media(max-width: 380px) { .tour-steps { margin-bottom: 14px; } .tour-guide, .tour-scene { border-radius: 12px; } }

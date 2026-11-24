@@ -14,8 +14,9 @@
   --text-size: clamp(1.0625rem, calc(.96rem + .21vw), 1.375rem);
   --label-size: clamp(1rem, calc(.94rem + .12vw), 1.1875rem);
   --preview-size: clamp(.875rem, calc(.8rem + .15vw), 1.125rem);
-  --motion: 240ms cubic-bezier(.22, 1, .36, 1);
-  --press: 140ms cubic-bezier(.22, 1, .36, 1);
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --motion: 240ms var(--ease-out);
+  --press: 140ms var(--ease-out);
   -webkit-text-size-adjust: 100%;
   font: 100%/1.5 Manrope, "Segoe UI", system-ui, sans-serif;
   color: var(--ink);
@@ -50,7 +51,7 @@ p { text-wrap: pretty; }
 .eyebrow { margin-bottom: 16px; color: var(--blue-dark); font-size: var(--label-size); font-weight: 750; }
 h1 { max-width: 760px; font-size: clamp(3rem, 4.25vw, 6rem); font-weight: 750; line-height: 1; letter-spacing: -.055em; }
 .lead { max-width: 45ch; margin-block: 24px; color: var(--muted); font-size: max(var(--text-size), clamp(1.125rem, 1.3vw, 1.375rem)); }
-.primary { display: inline-flex; align-items: center; justify-content: center; gap: 12px; max-width: 100%; min-height: 48px; padding: 8px 16px; border-radius: 10px; color: var(--white); background: var(--blue); font-weight: 750; text-decoration: none; transition: transform var(--press); }
+.primary { display: inline-flex; align-items: center; justify-content: center; gap: 12px; max-width: 100%; min-height: 48px; padding: 8px 16px; border-radius: 10px; color: var(--white); background: var(--blue); font-weight: 750; text-decoration: none; }
 .primary:active { background: var(--blue-dark); }
 .primary span { flex: none; }
 .note { margin-top: 12px; color: var(--muted); font-size: var(--label-size); }
@@ -141,19 +142,9 @@ h3 { font-size: clamp(1.25rem, calc(1.11rem + .25vw), 1.625rem); line-height: 1.
 .faq-icon { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: 8px; color: var(--blue-dark); background: #edf1ff; }
 .faq-icon::before, .faq-icon::after { content: ""; grid-area: 1 / 1; width: 12px; height: 2px; border-radius: 2px; background: currentColor; }
 .faq-icon::after { transform: rotate(90deg); transition: transform var(--motion), opacity var(--motion); }
-details[open] .faq-icon::after { opacity: 0; transform: rotate(0); }
+details[open]:not([data-closing]) .faq-icon::after { opacity: 0; transform: rotate(0); }
+.faq-answer { display: flow-root; overflow: clip; }
 .answers details p { max-width: 66ch; margin: 0 16px 16px; }
-
-@supports selector(details::details-content) and (interpolate-size: allow-keywords) {
-  .answers details::details-content {
-    block-size: 0;
-    overflow: clip;
-    opacity: 0;
-    interpolate-size: allow-keywords;
-    transition: block-size var(--motion), opacity var(--motion), content-visibility var(--motion) allow-discrete;
-  }
-  .answers details[open]::details-content { block-size: auto; opacity: 1; }
-}
 .bottom { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 40px; padding: 32px; border-radius: 16px; color: var(--white); background: #181e31; }
 .bottom p { color: #d4def9; }
 .bottom .primary { flex-shrink: 0; }
@@ -193,11 +184,22 @@ details[open] .faq-icon::after { opacity: 0; transform: rotate(0); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .hero .demo { animation: settle-in 440ms cubic-bezier(.22, 1, .36, 1) both; }
-  .is-in-view .steps li, .is-in-view .uses > * { animation: settle-in 360ms cubic-bezier(.22, 1, .36, 1) backwards; }
+  :where(.primary, .languages a, .demo-tabs button, #move-block, .feedback-links a, .faq-icon) {
+    transition: background-color var(--press), border-color var(--press), color var(--press), transform var(--press);
+  }
+  :where(.topnav > a, .footer nav > a, .footer-support summary, .support-email, .credit a) { transition: color var(--press); }
+  :where(.primary, .languages a, .demo-tabs button, #move-block, .feedback-links a):active { transform: scale(.98); }
+  .hero-copy, .hero .demo { animation: settle-in 360ms var(--ease-out) backwards; }
+  .hero .demo { animation-delay: 50ms; }
+  .is-in-view .steps li, .is-in-view .uses > *, .faq.is-in-view > *, .bottom.is-in-view {
+    animation: settle-in 300ms var(--ease-out) backwards;
+  }
   .is-in-view .steps li:nth-child(2), .is-in-view .uses > :nth-child(2) { animation-delay: 50ms; }
   .is-in-view .steps li:nth-child(3), .is-in-view .uses > :nth-child(3) { animation-delay: 100ms; }
-  .primary:active { transform: scale(.98); }
+  .art > :is(.video-view, .dashboard-view), .footer-support-panel { transition: opacity var(--motion); }
+  @starting-style {
+    .art > :is(.video-view, .dashboard-view), .footer-support-panel { opacity: .76; }
+  }
 }
 
 @keyframes settle-in {
@@ -269,7 +271,6 @@ details[open] .faq-icon::after { opacity: 0; transform: rotate(0); }
 }
 @media (prefers-reduced-motion: reduce) {
   .primary, .browser-window, .art-window, .faq-icon::after, .credit a::after { transition: none; }
-  .answers details::details-content { transition: none; }
   .demo[data-floating=false] .art-window { transform: none; }
   .credit a::after { transform: none; }
 }
