@@ -24,6 +24,11 @@ moveButton.addEventListener('click', () => {
   status.textContent = floating ? labels.detached : labels.restored;
 });
 
+const footerSupport = document.querySelector('.footer-support');
+footerSupport.addEventListener('toggle', () => {
+  if (footerSupport.open) footerSupport.scrollIntoView({block: 'nearest'});
+});
+
 if (window.matchMedia('(prefers-reduced-motion: no-preference)').matches && 'IntersectionObserver' in window) {
   const reveal = new IntersectionObserver(entries => {
     for (const entry of entries) {

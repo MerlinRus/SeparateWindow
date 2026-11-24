@@ -149,7 +149,18 @@
       <nav aria-label="$footer_navigation">
         <a href="/privacy.html#$lang">$privacy</a>
         <a href="https://github.com/MerlinRus/SeparateWindow">GitHub</a>
-        <a href="#support">$support</a>
+        <details class="footer-support">
+          <summary>$support <span class="faq-icon" aria-hidden="true"></span></summary>
+          <div class="footer-support-body">
+            <div class="footer-support-panel">
+              <a class="support-email" href="mailto:qobuz43@gmail.com">qobuz43@gmail.com</a>
+              <div class="feedback-links">
+                <a href="$bug_url">$bug_label</a>
+                <a href="$feature_url">$feature_label</a>
+              </div>
+            </div>
+          </div>
+        </details>
       </nav>
     </div>
     <p class="credit" lang="en">Design &amp; Build by <a href="https://maark.ru/">MAARK</a></p>
