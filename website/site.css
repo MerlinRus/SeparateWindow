@@ -155,7 +155,7 @@ details[open]:not([data-closing]) .faq-icon::after { opacity: 0; transform: rota
 .footer-support { max-width: 100%; scroll-margin-block-end: 12px; }
 .footer-support summary { display: flex; width: fit-content; align-items: center; gap: 6px; margin-inline-start: auto; cursor: pointer; list-style: none; }
 .footer-support .faq-icon { width: 20px; height: 20px; border-radius: 6px; }
-.footer-support-body { display: flex; justify-content: flex-end; width: 0; margin-inline-start: 100%; }
+.footer-support-body { display: flex; justify-content: flex-end; align-items: flex-start; width: 0; margin-inline-start: 100%; overflow: visible clip; }
 .footer-support-panel { flex: none; width: max-content; max-width: calc(100vw - 2 * var(--safe-gutter)); margin-top: 8px; padding: 8px 12px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--white); }
 .footer .footer-support-panel .support-email { margin-top: 0; font-size: inherit; text-decoration: underline; }
 .footer-support-panel .feedback-links { margin-top: 4px; }
@@ -184,6 +184,7 @@ details[open]:not([data-closing]) .faq-icon::after { opacity: 0; transform: rota
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  html:has(#support:target) { scroll-behavior: smooth; }
   :where(.primary, .languages a, .demo-tabs button, #move-block, .feedback-links a, .faq-icon) {
     transition: background-color var(--press), border-color var(--press), color var(--press), transform var(--press);
   }
@@ -196,9 +197,9 @@ details[open]:not([data-closing]) .faq-icon::after { opacity: 0; transform: rota
   }
   .is-in-view .steps li:nth-child(2), .is-in-view .uses > :nth-child(2) { animation-delay: 50ms; }
   .is-in-view .steps li:nth-child(3), .is-in-view .uses > :nth-child(3) { animation-delay: 100ms; }
-  .art > :is(.video-view, .dashboard-view), .footer-support-panel { transition: opacity var(--motion); }
+  .art > :is(.video-view, .dashboard-view) { transition: opacity var(--motion); }
   @starting-style {
-    .art > :is(.video-view, .dashboard-view), .footer-support-panel { opacity: .76; }
+    .art > :is(.video-view, .dashboard-view) { opacity: .76; }
   }
 }
 
