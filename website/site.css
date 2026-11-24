@@ -128,7 +128,7 @@ h3 { font-size: clamp(1.25rem, calc(1.11rem + .25vw), 1.625rem); line-height: 1.
 .faq { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,3fr); gap: clamp(24px, 3.5vw, 72px); padding-block: var(--section-space); }
 .support p { max-width: 45ch; }
 #support { scroll-margin-block-start: 24px; }
-#support:target { outline: 2px solid var(--blue); outline-offset: 4px; border-radius: 4px; }
+#support:focus { outline: none; }
 .support-email { display: inline-flex; align-items: center; max-width: 100%; min-height: 44px; margin-top: 8px; color: var(--blue-dark); font-size: max(1.125rem, var(--text-size)); font-weight: 750; text-underline-offset: 4px; }
 .feedback-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .feedback-links a { display: inline-flex; align-items: center; max-width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--blue-dark); background: var(--white); font-size: var(--label-size); font-weight: 750; text-decoration: none; }
