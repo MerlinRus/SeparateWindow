@@ -24,7 +24,7 @@
 .tour-primary, .tour-secondary { padding: 8px 14px; border: 1px solid transparent; }
 .tour-primary { background: var(--blue); color: var(--white); }
 .tour-primary:hover { background: var(--blue-dark); }
-.tour-secondary { border-color: var(--line); background: var(--white); color: var(--ink); }
+.tour-secondary { border-color: var(--line); background: var(--white); color: var(--ink); text-decoration: none; }
 .tour-secondary:hover { border-color: var(--blue); background: var(--paper); }
 .tour-text-button { padding: 4px 0; border: 0; background: none; color: var(--blue-dark); text-underline-offset: .2em; text-decoration: underline; }
 .tour-status { padding: 8px 12px; border-radius: 8px; background: #eaf5ed; color: #204f39; }
